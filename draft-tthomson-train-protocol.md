@@ -9,18 +9,18 @@ number:
 date:
 consensus: true
 v: 3
-area: AREA
-workgroup: WG Working Group
+# area: AREA
+# workgroup: WG Working Group
 keyword:
  - chugga chugga chugga chugga
  - mitm
 venue:
-  group: WG
-  type: Working Group
-  mail: WG@example.com
-  arch: https://example.com/WG
-  github: USER/REPO
-  latest: https://example.com/LATEST
+#  group: WG
+#  type: Working Group
+#  mail: WG@example.com
+#  arch: https://example.com/WG
+  github: "martinthomson/train-protocol"
+  latest: "https://martinthomson.github.io/train-protocol/draft-tthomson-train-protocol.html"
 
 author:
  -
