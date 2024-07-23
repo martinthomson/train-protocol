@@ -3,7 +3,7 @@ title: "Transparent Rate Adaptation Indicators for Network Elements (TRAIN)"
 abbrev: "TRAIN Protocol"
 category: info
 
-docname: draft-tthomson-train-protocol-latest
+docname: draft-thomson-train-protocol-latest
 submissiontype: IETF
 number:
 date:
@@ -20,7 +20,7 @@ venue:
 #  mail: WG@example.com
 #  arch: https://example.com/WG
   github: "martinthomson/train-protocol"
-  latest: "https://martinthomson.github.io/train-protocol/draft-tthomson-train-protocol.html"
+  latest: "https://martinthomson.github.io/train-protocol/draft-thomson-train-protocol.html"
 
 author:
  -
