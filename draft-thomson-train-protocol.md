@@ -69,7 +69,7 @@ version indicates a specific rate limit.
 +--------+    +---------+    +----------+
 |  QUIC  |    | Network |    |   QUIC   |
 | Sender |    | Element |    | Receiver |
-+---+----+    +----+----+    +----------+
++---+----+    +----+----+    +----+-----+
     |              |              |
     +---- v1 ----->|              |
     |              +----- vx ---->|
