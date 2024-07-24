@@ -147,6 +147,7 @@ number of send rates, as shown in {{table-rates}}.
 
 | Rate Limit | Version 1 | Version 2 |
 |--:|:--|:--|
+| trigger    | 0xTBD | 0xTBD |
 | 1Mbps      | 0xTBD | 0xTBD |
 | 2Mbps      | 0xTBD | 0xTBD |
 | 3Mbps      | 0xTBD | 0xTBD |
@@ -178,6 +179,27 @@ cfXXXXXXXX0008f067a5502a4262b574 6f6b656ec8646ce8bfe33952d9555436
 But the 4 bytes of the version number will be restored to 0x6b3343cf before
 attempting to process the packet further.
 
+The "trigger" version used by the endpoints when sending long header packets
+that on-path network elements are authorized to rewrite. receiving packets
+with that value indicates that no on-path element provided a bandwidth
+indication.
+
+{:aside}
+> TODO: we should indicate that the bandwidth here is the maximum
+> receive rate. That is, if A sends a long header packet and B receives
+> that packet with a version encoding the bandwidth, that version
+> indicates the maximum rate at which B can send and A can receive.
+> That way we don't need B to echo a max send rate value to A.
+
+
+# Onboarding the train {#nego}
+
+The TRAIN extension requires cooperation between the two endpoints. Each endpoint
+indicates its willingness to receive long header packets by publishing
+the "train-station-ready" transport parameter (TBD), which a zero length value.
+
+Endpoint MAY set the version field of long header packets to the trigger
+value if the peer has published the "train-station-ready" parameter.
 
 # Deployment
 
@@ -193,6 +215,7 @@ modification as damage and discard the packet.
 > TODO: do we need to define a new QUIC version where support for that version
 > also indicates support for this feature?  That might allow endpoints to know
 > that their long header packets, if modified, won't get dropped.
+> YES: see "trigger" above.
 
 {:aside}
 > TODO: determine whether we want a frame that solicits the sending of a long
