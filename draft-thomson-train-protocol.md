@@ -183,17 +183,9 @@ But the 4 bytes of the version number will be restored to 0x6b3343cf before
 attempting to process the packet further.
 
 The "trigger" version used by the endpoints when sending long header packets
-that on-path network elements are authorized to rewrite. receiving packets
+that on-path network elements are authorized to rewrite. Receiving packets
 with that value indicates that no on-path element provided a bandwidth
 indication.
-
-{:aside}
-> TODO: we should indicate that the bandwidth here is the maximum
-> receive rate. That is, if A sends a long header packet and B receives
-> that packet with a version encoding the bandwidth, that version
-> indicates the maximum rate at which B can send and A can receive.
-> That way we don't need B to echo a max send rate value to A.
-
 
 # Onboarding the train {#nego}
 
@@ -266,6 +258,7 @@ value in a TRAIN_BANDWIDTH frame.
 TRAIN_BANDWIDTH Frame {
   Type (i) = 0x15228c0c,
   Path Identifier (i),
+  Bandwidth (i)
 }
 ~~~
 {: #fig-train-bandwidth-frame title="TRAIN_BANDWIDTH Frame Format"}
