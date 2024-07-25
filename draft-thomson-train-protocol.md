@@ -149,7 +149,7 @@ the set of rate limits that are supported and the version number that
 corresponds to each limit.
 
 {:aside}
-> Note: The exact set of rates that are included is illustrative only.  We need to 
+> Note: The exact set of rates that are included is illustrative only.  We need to
 
 | Rate Limit | Version Number |
 |--:|:--|:--|
@@ -191,7 +191,7 @@ Packets for each of these versions is processed as follows:
    rate to its peer, so that the peer can adapt sending behavior.
 
 For example, the example Retry packet (this one is copied from {{Appendix A.4 of
-RFC9369}}, we'll need to generate a new one) might be modified to indicate a rate
+?RFC9369}}, we'll need to generate a new one) might be modified to indicate a rate
 limit of TBD to produce a packet of:
 
 ~~~ example
