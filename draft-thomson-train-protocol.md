@@ -151,7 +151,6 @@ number of send rates, as shown in {{table-rates}}.
 
 | Rate Limit | Version 1 | Version 2 |
 |--:|:--|:--|
-| trigger    | 0xTBD | 0xTBD |
 | 1Mbps      | 0xTBD | 0xTBD |
 | 2Mbps      | 0xTBD | 0xTBD |
 | 3Mbps      | 0xTBD | 0xTBD |
@@ -200,10 +199,9 @@ indication.
 
 The TRAIN extension requires cooperation between the two endpoints. Each endpoint
 indicates its willingness to receive long header packets by negotiating the
-support of one of the QUIC "trigger" versions, as defined in {{QUIC-VN}}.
+support the QUIC TRAIN version, as defined in {{QUIC-VN}}.
 Once the version has been negotiated, endpoints will use it in long
-header packets, as defined is {{QUIC-TRANSPORT}} or {{QUIC-V2}}
-respectively.
+header packets.
 
 Negotiating one of the trigger versions implies support for the
 TRAIN_BANDWIDTH frame (see {{tbwf}}).
