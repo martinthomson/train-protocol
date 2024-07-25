@@ -1,0 +1,252 @@
+{
+  "magic": "E!vIA5L86J2I",
+  "timestamp": "2024-07-25T01:01:08.051200+00:00",
+  "repo": "martinthomson/train-protocol",
+  "labels": [
+    {
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "name": "documentation",
+      "description": "Improvements or additions to documentation",
+      "color": "0075ca"
+    },
+    {
+      "name": "duplicate",
+      "description": "This issue or pull request already exists",
+      "color": "cfd3d7"
+    },
+    {
+      "name": "enhancement",
+      "description": "New feature or request",
+      "color": "a2eeef"
+    },
+    {
+      "name": "good first issue",
+      "description": "Good for newcomers",
+      "color": "7057ff"
+    },
+    {
+      "name": "help wanted",
+      "description": "Extra attention is needed",
+      "color": "008672"
+    },
+    {
+      "name": "invalid",
+      "description": "This doesn't seem right",
+      "color": "e4e669"
+    },
+    {
+      "name": "question",
+      "description": "Further information is requested",
+      "color": "d876e3"
+    },
+    {
+      "name": "wontfix",
+      "description": "This will not be worked on",
+      "color": "ffffff"
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "id": "I_kwDOMaSf_M6Qn1aP",
+      "title": "How do we protect from spoofed packets?",
+      "url": "https://github.com/martinthomson/train-protocol/issues/1",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We have a risk that some \"man on the side\" will inject spoofed packets for fun and profit. We need to consider that in the security section. We have basically two level of protection:\r\n\r\n1) The attacker needs to see the original traffic in order to learn connection IDs, etc.\r\n2) The receiver can verify that the packet decrypts correctly after resetting the version ID.\r\n\r\nThe combination of the two is probably OK: it proves that the network element was able to receive a packet and change it. But in the case of packets sent after the handshake completes, the keys have been discarded and there is no way to do any verification. The only security is the check of the CIDs. Is that sufficient?",
+      "createdAt": "2024-07-24T00:44:35Z",
+      "updatedAt": "2024-07-24T14:29:57Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "I currently have text in the draft that says that you only accept signals that have the modified version when there is a packet in the same datagram that is accepted.  This does not prevent an off-path attacker that is able to observe a valid packet from trying to race a modified packet toward the receiver, but I think that this is the best we can manage.",
+          "createdAt": "2024-07-24T14:29:56Z",
+          "updatedAt": "2024-07-24T14:29:56Z"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "id": "I_kwDOMaSf_M6Qn4ui",
+      "title": "Transport parameter",
+      "url": "https://github.com/martinthomson/train-protocol/issues/2",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The mechanism provides a bandwidth limit to the receiving endpoint, by rewriting the version field of long header packets. It does require some cooperation of the endpoints:\r\n\r\n* be willing to receive packets with version set to one of the reserved values,\r\n* be willing to send long header packets after the handshake is complete,\r\n* if the bandwidth parameter describes a \"max send rate\", be willing to relay the value to the peer. (This would not be needed if the bandwidth parameter indicated \"max receive rate\".)\r\n\r\nI think we need to define a transport parameter to negotiate that.",
+      "createdAt": "2024-07-24T00:59:12Z",
+      "updatedAt": "2024-07-25T00:59:03Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "I don't think that we need a transport parameter for that purpose.  The only thing I might suggest is necessary is the negotiation of a new frame that solicits the sending of a long header packet.  Even that, I'm less sure about.  Endpoints can periodically stuff a small, pointless, long header packet in a datagram that they are sending.\r\n\r\nRelaying the received max send rate to a peer is an application matter.",
+          "createdAt": "2024-07-24T14:31:47Z",
+          "updatedAt": "2024-07-24T14:31:47Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "body": "> Endpoints can periodically stuff a small, pointless, long header packet in a datagram that they are sending.\r\n\r\nFWIW it is my understanding that such behavior is already allowed explicitly in [Section 14.4.1 of RFC 9000](https://datatracker.ietf.org/doc/html/rfc9000#name-pmtu-probes-containing-sour).\r\n\r\nAll we are doing here is exercising an existing mechanism. We do not need TP. If we find out endpoints break due to seeing long header packets post-handshake, those endpoints are broken.",
+          "createdAt": "2024-07-24T22:49:50Z",
+          "updatedAt": "2024-07-24T22:49:50Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "We also need a new frame to echo the bandwidth indicated by the network. But that can be negotiated by version negotiation.",
+          "createdAt": "2024-07-25T00:59:02Z",
+          "updatedAt": "2024-07-25T00:59:02Z"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "id": "I_kwDOMaSf_M6QtzGK",
+      "title": "Jana's notes",
+      "url": "https://github.com/martinthomson/train-protocol/issues/4",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Things to write about:\r\n\r\n    matrix of different signal semantics and responses\r\n    Why is this achievable with ecn but it is different from ecn\r\n    argue that this doesn\u2019t change operator behavior but exposes it\r\n    escape hatch for how end points can stop listening to this signal",
+      "createdAt": "2024-07-24T15:46:00Z",
+      "updatedAt": "2024-07-24T15:46:00Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 5,
+      "id": "I_kwDOMaSf_M6Qwyv0",
+      "title": "Eliminate the concept of \"rewriting\" versions",
+      "url": "https://github.com/martinthomson/train-protocol/issues/5",
+      "state": "OPEN",
+      "author": "kazuho",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Current design suggests middleboxes rewrite QUIC packets.\r\n\r\nThis approach has the following problem:\r\n* If middleboxes rewrite ordinary QUIC packets (e.g., V1) as the current draft suggests, it would have negative performance impact to existing stacks, as the rewrite would lead up to packet loss events.\r\n* We could define a trigger version, but that requires coordination on both endpoints. While that is possible, the concern is that the design might become dependent to the internals of specific version of QUIC (see #3). What we prefer is a design neutral to QUIC versions (or a design that works with UDP-based protocols other than QUIC).\r\n\r\nSo what about the following:\r\n* Instead of rewriting packets, let middleboxes *inject* long header QUIC packets. The QUIC version number field identifies that the packet carries bandwidth information. The bandwidth information itself can be encoded as part of the version number, or it can be the payload of the long header packet.\r\n* The receiver verifies if the injected packet is from a on-path device, by verifying the CID pair of the QUIC packet. This works because QUIC deployments use non-zero length CID in at least one direction.\r\n\r\nTo paraphrase, middleboxes that observe a long header QUIC packet can simply copy the Destination CID and Source CID fields of the QUIC packet, and inject a new QUIC packet using the same CID pair, with a special version number(s) indicating that the information is from the middlebox.\r\n\r\nAs said, the benefit of this approach is that it would work with any version of QUIC, and that there would be no negative impact to the throughput of existing QUIC stacks. The design can be adopted by other UDP-based protocols, provided that they define a way for endpoints to agree on the value of CID fields used for validation.\r\n\r\nWDYT?",
+      "createdAt": "2024-07-25T00:43:45Z",
+      "updatedAt": "2024-07-25T00:45:03Z",
+      "closedAt": null,
+      "comments": []
+    }
+  ],
+  "pulls": [
+    {
+      "number": 3,
+      "id": "PR_kwDOMaSf_M52R5o2",
+      "title": "Transport parameter and trigger version",
+      "url": "https://github.com/martinthomson/train-protocol/pull/3",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This PR proposes:\r\n\r\n* define a \"trigger\" version,\r\n* use a transport parameter to indicate support of the feature,\r\n* hint that we need to add text specifying use of trigger version by routers",
+      "createdAt": "2024-07-24T01:33:03Z",
+      "updatedAt": "2024-07-25T00:43:09Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "ch-review-1",
+      "headRefOid": "ace1be8e94eef04367a886e608e3741b7224b691",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "body": "As @martinthomson says, we do not need a TP.\r\n\r\nBut :+1: to having a trigger version. Unless we do, middleboxes might rewrite handshake packets, which end ups as a packet loss to endpoints that do not understand the Train protocol.\r\n\r\nIMO, trigger version can be independent from the base version (e.g., V1).\r\n\r\nThe protocol can be as simple as below, with zero negotiation:\r\n* the sender unilaterally, and occasionally sends long header packet carrying the trigger version\r\n* middleboxes can rewrite this packet\r\n* the receiver receives the packet, and verifies that the received packet carries the correct CID pair. If they do, and the version number is changed, then that's the signal from the middlebox.\r\n\r\nPS. Thd downside of using the CID pair as a way to prevent off-path spoofing is that Train will not work when QUIC is used with zero-length CIDs _in both directions_. But such use never exist in practice, so we do not need to care.",
+          "createdAt": "2024-07-25T00:14:56Z",
+          "updatedAt": "2024-07-25T00:19:17Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I assumed two trigger versions in the PR, but @kazuho has a point. It would be better to have just one set of trigger values, etc. But then there is the little issue of how to decrypt packets, etc.",
+          "createdAt": "2024-07-25T00:43:08Z",
+          "updatedAt": "2024-07-25T00:43:08Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6C317a",
+          "commit": {
+            "abbreviatedOid": "f87276d"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-24T05:30:45Z",
+          "updatedAt": "2024-07-24T05:30:46Z",
+          "comments": [
+            {
+              "originalPosition": 29,
+              "body": "I don't think that we need a transport parameter.  We do, however, probably want a trigger version, but I think that this is just the version of QUIC that we are talking about, which can be a completely new version rather than an alias for v1 or v2.  WDYT?",
+              "createdAt": "2024-07-24T05:30:45Z",
+              "updatedAt": "2024-07-24T05:30:46Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6C9Oxi",
+          "commit": {
+            "abbreviatedOid": "f87276d"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-24T15:32:11Z",
+          "updatedAt": "2024-07-24T15:32:11Z",
+          "comments": [
+            {
+              "originalPosition": 29,
+              "body": "Yes, a version number negotiation or a parameter negotiation have similar properties. But then we need to express how we do that. I assume we can do that as a robust version negotiation (need to look the V2 and negotiation drafts). Start with V1 or V2, upgrade to negotiated trigger. And then, add a definition of the \"echo_max\" frame whose support goes with the negotiated version.",
+              "createdAt": "2024-07-24T15:32:11Z",
+              "updatedAt": "2024-07-24T15:32:11Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DAzMG",
+          "commit": {
+            "abbreviatedOid": "f87276d"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-25T00:37:40Z",
+          "updatedAt": "2024-07-25T00:37:40Z",
+          "comments": [
+            {
+              "originalPosition": 29,
+              "body": " I remove that text and added version negotiation and a frame for sending the bandwidth. ",
+              "createdAt": "2024-07-25T00:37:40Z",
+              "updatedAt": "2024-07-25T00:37:40Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
