@@ -4,8 +4,8 @@
 
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
-Intended status: Informational                              24 July 2024
-Expires: 25 January 2025
+Intended status: Informational                              25 July 2024
+Expires: 26 January 2025
 
 
   Transparent Rate Adaptation Indicators for Network Elements (TRAIN)
@@ -45,7 +45,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 25 January 2025.
+   This Internet-Draft will expire on 26 January 2025.
 
 Copyright Notice
 
@@ -72,11 +72,12 @@ Table of Contents
    7.  Deployment
      7.1.  Changing Rate Limit Signals
      7.2.  Providing Opportunities to Attach Rate Limit Signals
-   8.  Security Considerations
-   9.  IANA Considerations
-   10. References
-     10.1.  Normative References
-     10.2.  Informative References
+   8.  The TRAIN BANDWIDTH frame
+   9.  Security Considerations
+   10. IANA Considerations
+   11. References
+     11.1.  Normative References
+     11.2.  Informative References
    Acknowledgments
    Author's Address
 
@@ -252,12 +253,13 @@ Table of Contents
 
    The TRAIN extension requires cooperation between the two endpoints.
    Each endpoint indicates its willingness to receive long header
-   packets by publishing the "train-station-ready" transport parameter
-   (TBD), which a zero length value.
+   packets by negotiating the support of one of the QUIC "trigger"
+   versions, as defined in [QUIC-VN].  Once the version has been
+   negotiated, endpoints will use it in long header packets, as defined
+   is [QUIC-TRANSPORT] or [QUIC-V2] respectively.
 
-   Endpoint MAY set the version field of long header packets to the
-   trigger value if the peer has published the "train-station-ready"
-   parameter.
+   Negotiating one of the trigger versions implies support for the
+   TRAIN_BANDWIDTH frame (see Section 8).
 
 7.  Deployment
 
@@ -306,7 +308,25 @@ Table of Contents
    packet when there are no valid packets in the datagram SHOULD ignore
    any rate limit signal.  Such a datagram might be entirely spoofed.
 
-8.  Security Considerations
+8.  The TRAIN BANDWIDTH frame
+
+   The rate limit designated by one of the reserved version values
+   indicates the rate limit for packets sent in that direction of
+   transport.  The endpoint receiving the indication SHOULD forward it
+   to the peer by posting the value in a TRAIN_BANDWIDTH frame.
+
+   TRAIN_BANDWIDTH Frame {
+     Type (i) = 0x15228c0c,
+     Path Identifier (i),
+   }
+
+                   Figure 1: TRAIN_BANDWIDTH Frame Format
+
+      |  TODO: how do we identify the path exactly? do we need some kind
+      |  of ordering, to make sure that the receiver only keeps the
+      |  latest version?  Probably needs to specify repeat rules.
+
+9.  Security Considerations
 
    The modification of packets provides endpoints proof that a network
    element is in a position to drop datagrams and thereby enforce the
@@ -324,15 +344,15 @@ Table of Contents
    respected, network elements cannot assume that the signaled limit
    will be respected by endpoints.
 
-9.  IANA Considerations
+10.  IANA Considerations
 
    This document registers many new QUIC versions.
 
       |  TODO: actually pick some numbers and register them.
 
-10.  References
+11.  References
 
-10.1.  Normative References
+11.1.  Normative References
 
    [BCP14]    Best Current Practice 14,
               <https://www.rfc-editor.org/info/bcp14>.
@@ -347,6 +367,20 @@ Table of Contents
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
+   [QUIC-TRANSPORT]
+              Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
+              Multiplexed and Secure Transport", RFC 9000,
+              DOI 10.17487/RFC9000, May 2021,
+              <https://www.rfc-editor.org/rfc/rfc9000>.
+
+   [QUIC-V2]  Duke, M., "QUIC Version 2", RFC 9369,
+              DOI 10.17487/RFC9369, May 2023,
+              <https://www.rfc-editor.org/rfc/rfc9369>.
+
+   [QUIC-VN]  Schinazi, D. and E. Rescorla, "Compatible Version
+              Negotiation for QUIC", RFC 9368, DOI 10.17487/RFC9368, May
+              2023, <https://www.rfc-editor.org/rfc/rfc9368>.
+
    [RFC8999]  Thomson, M., "Version-Independent Properties of QUIC",
               RFC 8999, DOI 10.17487/RFC8999, May 2021,
               <https://www.rfc-editor.org/rfc/rfc8999>.
@@ -360,7 +394,7 @@ Table of Contents
               DOI 10.17487/RFC9369, May 2023,
               <https://www.rfc-editor.org/rfc/rfc9369>.
 
-10.2.  Informative References
+11.2.  Informative References
 
    [QUIC-MP]  Liu, Y., Ma, Y., De Coninck, Q., Bonaventure, O., Huitema,
               C., and M. Kühlewind, "Multipath Extension for QUIC", Work
