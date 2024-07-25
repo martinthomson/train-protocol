@@ -71,10 +71,10 @@ version indicates a specific rate limit.
 | Sender |    | Element |    | Receiver |
 +---+----+    +----+----+    +----+-----+
     |              |              |
-    +---- v1 ----->|              |
+    +---- v3 ----->|              |
     |              +----- vx ---->|
     |              |              |  vx ==> rate limit = y
-    |              |              |     ==> v1
+    |              |              |     ==> v3
     |              |              |
 ~~~
 
@@ -136,47 +136,73 @@ occurs as this is specific to the application in use.
 {::boilerplate bcp14-tagged-bcp}
 
 
-# Version Mappings
+# Version Mapping
 
-This document defines version number mappings for QUIC version 1 {{!RFC9000}}
-and version 2 {{!RFC9369}}.  Rate limit mappings are defined for a limited
-number of send rates, as shown in {{table-rates}}.
+This document defines a new QUIC version, 0xTBDTRAIN.  It also defines a set of
+additional version numbers that correspond to the same protocol, but which each
+correspond to a single rate limit.
+
+QUIC endpoints negotiate the use of QUIC version 0xTBDTRAIN.  Middleboxes that wish
+to indicate a particular rate limit for the flow can replace the version number
+with the version number corresponding to that rate limit.  {{table-rates}} shows
+the set of rate limits that are supported and the version number that
+corresponds to each limit.
 
 {:aside}
-> Note: The exact set of rates that are included is subject to negotiation.
+> Note: The exact set of rates that are included is illustrative only.  We need to 
 
-| Rate Limit | Version 1 | Version 2 |
+| Rate Limit | Version Number |
 |--:|:--|:--|
-| 1Mbps      | 0xTBD | 0xTBD |
-| 2Mbps      | 0xTBD | 0xTBD |
-| 3Mbps      | 0xTBD | 0xTBD |
-| 4Mbps      | 0xTBD | 0xTBD |
-| 5Mbps      | 0xTBD | 0xTBD |
-| 7Mbps      | 0xTBD | 0xTBD |
-| 10Mbps      | 0xTBD | 0xTBD |
-| 15Mbps      | 0xTBD | 0xTBD |
-| 20Mbps      | 0xTBD | 0xTBD |
-| 50Mbps      | 0xTBD | 0xTBD |
-{: #table-rates title="Version and Rate Limit Mappings"}
+| 1Mbps      | 0xTBD |
+| 2Mbps      | 0xTBD |
+| 3Mbps      | 0xTBD |
+| 4Mbps      | 0xTBD |
+| 5Mbps      | 0xTBD |
+| 7Mbps      | 0xTBD |
+| 10Mbps      | 0xTBD |
+| 15Mbps      | 0xTBD |
+| 20Mbps      | 0xTBD |
+| 50Mbps      | 0xTBD |
+{: #table-rates title="Rate Limit to Version Mapping"}
 
-Packets for each of these versions is processed exactly as they would be for
-QUIC version 1 or QUIC version 2.  In particular, when a packet with one of
-these versions is received, the value of the version field is replaced by the
-version number for either QUIC version 1 (0x00000001) or QUIC version 2
-(0x6b3343cf).  Thus, the packet protection mechanism used by the canonical QUIC
-version is identical and AEAD decryption would fail if the limit-specific
-version number is left in place.
+A network element MUST NOT replace an apparent match of version number unless
+the first byte of the UDP payload has the high bit set and if the next four
+bytes match either the canonical TRAIN version (0xTBDTRAIN) or one of the
+versions listed in {{table-rates}}.  {{reduce}} describes in more detail how a
+network element might replace a version field in a packet.
 
-For example, the example Retry packet from {{Appendix A.4 of RFC9369}} might be
-modified to indicate a rate limit of TBD to produce a packet of:
+Packets for each of these versions is processed as follows:
 
-~~~
+1. When a packet with one of these versions is received, the endpoint notes the
+   rate limit that is implied by that version.
+
+2. The value of the version field is replaced by the canonical version of
+   0xTBDTRAIN.  This ensures that the AEAD packet protection can be removed.
+
+3. Any additional packets in the datagram are processed, replacing versions as
+   necessary.  Note that the expectation is that network elements will not need
+   to replace the version number in these packets.
+
+4. If any packet in the datagram is accepted, the rate limit is accepted and
+   passed to the application.
+
+5. The application is then responsible for handling the rate limit.  An
+   application that chooses to act on the information might signal the indicated
+   rate to its peer, so that the peer can adapt sending behavior.
+
+For example, the example Retry packet (this one is copied from {{Appendix A.4 of
+RFC9369}}, we'll need to generate a new one) might be modified to indicate a rate
+limit of TBD to produce a packet of:
+
+~~~ example
 cfXXXXXXXX0008f067a5502a4262b574 6f6b656ec8646ce8bfe33952d9555436
 65dcc7b6
 ~~~
 
-But the 4 bytes of the version number will be restored to 0x6b3343cf before
-attempting to process the packet further.
+But the 4 bytes of the version number will be restored to 0xTBDTRAIN before
+attempting to process the packet further.  If the packet is then accepted, the
+rate limit signal is also accepted.  If the packet is discarded, the rate limit
+signal is ignored.
 
 
 # Deployment
@@ -199,7 +225,10 @@ modification as damage and discard the packet.
 > header packet.
 
 
-## Changing Rate Limit Signals
+## Setting and Changing Rate Limit Signals {#reduce}
+
+A network element can look for QUIC packets with a long header and the version
+0xTBDTRAIN, replacing that version with a target version number.
 
 A network element might receive a packet that already includes a rate limit
 signal.  If the network element wishes to signal a lower rate limit, they can
@@ -207,6 +236,39 @@ replace the Version field with a different value that indicates the lower limit.
 If the network element wishes to signal a higher rate limit, they leave the
 signal alone, preserving the signal from the network element that has a lower
 rate limit policy.
+
+A simple replacement algorithm for a network element therefore might start by
+placing version numbers in an ordered list, with versions that correspond to
+higher rates first. The index of the version that corresponds to the target rate
+limit is found when the value is configured.  When forwarding a packet, the
+index of the version from the packet is found; if the index in the packet is
+smaller than the index of the target, the version field in the packet is
+replaced with the target version.
+
+In pseudocode, a replacement algorithm might look something like:
+
+~~~ pseudocode
+versions = [
+  0xTBDTRAIN,
+  0xTBD, # version for highest rate
+  ...,
+  0xTBD  # version for lowest rate
+]
+target_version = versions.for(rate_limit)
+target_index = versions.index_of(target_version)
+
+packet_version = packet[1..5] as int
+packet_index = versions.index_of(packet_version)
+if (packet[0] & 0x80 == 0x80
+    and packet_index < target_index) then:
+  packet[1..5] = target_version as bytes
+~~~
+
+{:aside}
+> TODO: When we pick version numbers, it will be easier to perform this
+> "index_of" operation if the version numbers are carefully chosen.  Order them
+> sensibly and maybe rewrite this algorithm.
+
 
 
 ## Providing Opportunities to Attach Rate Limit Signals {#bogus-long}
@@ -221,8 +283,8 @@ long discarded by an endpoint.  Endpoints that receive long header packets can
 process rate limit signals before attempting to remove packet protection or
 before discarding these packets.
 
-An endpoint that send long header packets for this purpose SHOULD send those
-packets as the first packet of a datagram, including additional valid packets.
+An endpoint that send long header packets for this purpose MUST send those
+packets as the first packet of a datagram, followed by additional valid packets.
 An endpoint that receives and discards a packet when there are no valid packets
 in the datagram SHOULD ignore any rate limit signal.  Such a datagram might be
 entirely spoofed.
