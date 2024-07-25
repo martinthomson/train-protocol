@@ -29,6 +29,10 @@ author:
     email: mt@lowentropy.net
 
 normative:
+  QUIC-TRANSPORT: rfc9000
+  QUIC-V2: rfc9369
+  QUIC-VN: rfc9368
+
 
 informative:
 
@@ -195,11 +199,14 @@ indication.
 # Onboarding the train {#nego}
 
 The TRAIN extension requires cooperation between the two endpoints. Each endpoint
-indicates its willingness to receive long header packets by publishing
-the "train-station-ready" transport parameter (TBD), which a zero length value.
+indicates its willingness to receive long header packets by negotiating the
+support of one of the QUIC "trigger" versions, as defined in {{QUIC-VN}}.
+Once the version has been negotiated, endpoints will use it in long
+header packets, as defined is {{QUIC-TRANSPORT}} or {{QUIC-V2}}
+respectively.
 
-Endpoint MAY set the version field of long header packets to the trigger
-value if the peer has published the "train-station-ready" parameter.
+Negotiating one of the trigger versions implies support for the
+TRAIN_BANDWIDTH frame (see {{tbwf}}).
 
 # Deployment
 
@@ -250,6 +257,26 @@ An endpoint that receives and discards a packet when there are no valid packets
 in the datagram SHOULD ignore any rate limit signal.  Such a datagram might be
 entirely spoofed.
 
+# The TRAIN BANDWIDTH frame {#tbwf}
+
+The rate limit designated by one of the reserved version values indicates
+the rate limit for packets sent in that direction of transport. The endpoint
+receiving the indication SHOULD forward it to the peer by posting the
+value in a TRAIN_BANDWIDTH frame.
+
+~~~
+TRAIN_BANDWIDTH Frame {
+  Type (i) = 0x15228c0c,
+  Path Identifier (i),
+}
+~~~
+{: #fig-train-bandwidth-frame title="TRAIN_BANDWIDTH Frame Format"}
+
+{:aside}
+> TODO: how do we identify the path exactly?
+> do we need some kind of ordering, to make sure that
+> the receiver only keeps the latest version?
+> Probably needs to specify repeat rules.
 
 
 # Security Considerations
