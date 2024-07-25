@@ -1345,11 +1345,6 @@ number of send rates, as shown in <a href="#_table-rates" class="auto internal x
         </thead>
         <tbody>
           <tr>
-            <td class="text-right" rowspan="1" colspan="1">trigger</td>
-            <td class="text-left" rowspan="1" colspan="1">0xTBD</td>
-            <td class="text-left" rowspan="1" colspan="1">0xTBD</td>
-          </tr>
-          <tr>
             <td class="text-right" rowspan="1" colspan="1">1Mbps</td>
             <td class="text-left" rowspan="1" colspan="1">0xTBD</td>
             <td class="text-left" rowspan="1" colspan="1">0xTBD</td>
@@ -1439,10 +1434,9 @@ That way we don't need B to echo a max send rate value to A.<a href="#section-5-
       </h2>
 <p id="section-6-1">The TRAIN extension requires cooperation between the two endpoints. Each endpoint
 indicates its willingness to receive long header packets by negotiating the
-support of one of the QUIC "trigger" versions, as defined in <span>[<a href="#QUIC-VN" class="cite xref">QUIC-VN</a>]</span>.
+support the QUIC TRAIN version, as defined in <span>[<a href="#QUIC-VN" class="cite xref">QUIC-VN</a>]</span>.
 Once the version has been negotiated, endpoints will use it in long
-header packets, as defined is <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span> or <span>[<a href="#QUIC-V2" class="cite xref">QUIC-V2</a>]</span>
-respectively.<a href="#section-6-1" class="pilcrow">¶</a></p>
+header packets.<a href="#section-6-1" class="pilcrow">¶</a></p>
 <p id="section-6-2">Negotiating one of the trigger versions implies support for the
 TRAIN_BANDWIDTH frame (see <a href="#tbwf" class="auto internal xref">Section 8</a>).<a href="#section-6-2" class="pilcrow">¶</a></p>
 </section>
