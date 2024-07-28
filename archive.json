@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-25T01:01:08.051200+00:00",
+  "timestamp": "2024-07-28T01:05:49.982828+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -86,7 +86,7 @@
       "labels": [],
       "body": "The mechanism provides a bandwidth limit to the receiving endpoint, by rewriting the version field of long header packets. It does require some cooperation of the endpoints:\r\n\r\n* be willing to receive packets with version set to one of the reserved values,\r\n* be willing to send long header packets after the handshake is complete,\r\n* if the bandwidth parameter describes a \"max send rate\", be willing to relay the value to the peer. (This would not be needed if the bandwidth parameter indicated \"max receive rate\".)\r\n\r\nI think we need to define a transport parameter to negotiate that.",
       "createdAt": "2024-07-24T00:59:12Z",
-      "updatedAt": "2024-07-25T00:59:03Z",
+      "updatedAt": "2024-07-26T00:16:41Z",
       "closedAt": null,
       "comments": [
         {
@@ -109,6 +109,13 @@
           "body": "We also need a new frame to echo the bandwidth indicated by the network. But that can be negotiated by version negotiation.",
           "createdAt": "2024-07-25T00:59:02Z",
           "updatedAt": "2024-07-25T00:59:02Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "I agree with Kazuho on this point.",
+          "createdAt": "2024-07-26T00:16:39Z",
+          "updatedAt": "2024-07-26T00:16:39Z"
         }
       ]
     },
@@ -131,18 +138,80 @@
     {
       "number": 5,
       "id": "I_kwDOMaSf_M6Qwyv0",
-      "title": "Eliminate the concept of \"rewriting\" versions",
+      "title": "Switch from \"rewriting\" to \"injecting\"",
       "url": "https://github.com/martinthomson/train-protocol/issues/5",
       "state": "OPEN",
       "author": "kazuho",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
-      "body": "Current design suggests middleboxes rewrite QUIC packets.\r\n\r\nThis approach has the following problem:\r\n* If middleboxes rewrite ordinary QUIC packets (e.g., V1) as the current draft suggests, it would have negative performance impact to existing stacks, as the rewrite would lead up to packet loss events.\r\n* We could define a trigger version, but that requires coordination on both endpoints. While that is possible, the concern is that the design might become dependent to the internals of specific version of QUIC (see #3). What we prefer is a design neutral to QUIC versions (or a design that works with UDP-based protocols other than QUIC).\r\n\r\nSo what about the following:\r\n* Instead of rewriting packets, let middleboxes *inject* long header QUIC packets. The QUIC version number field identifies that the packet carries bandwidth information. The bandwidth information itself can be encoded as part of the version number, or it can be the payload of the long header packet.\r\n* The receiver verifies if the injected packet is from a on-path device, by verifying the CID pair of the QUIC packet. This works because QUIC deployments use non-zero length CID in at least one direction.\r\n\r\nTo paraphrase, middleboxes that observe a long header QUIC packet can simply copy the Destination CID and Source CID fields of the QUIC packet, and inject a new QUIC packet using the same CID pair, with a special version number(s) indicating that the information is from the middlebox.\r\n\r\nAs said, the benefit of this approach is that it would work with any version of QUIC, and that there would be no negative impact to the throughput of existing QUIC stacks. The design can be adopted by other UDP-based protocols, provided that they define a way for endpoints to agree on the value of CID fields used for validation.\r\n\r\nWDYT?",
+      "body": "Current design suggests middleboxes rewrite QUIC packets.\r\n\r\nThis approach has the following problem:\r\n* If middleboxes rewrite ordinary QUIC packets (e.g., V1) as the current draft suggests, it would have negative performance impact to existing stacks, as the rewrite would lead up to packet loss events.\r\n* We could define a trigger version, but that requires coordination on both endpoints. While that is possible, the concern is that the design might become dependent to the internals of specific version of QUIC (see #3). What we prefer is a design neutral to QUIC versions (or a design that works with UDP-based protocols other than QUIC).\r\n\r\nSo what about the following:\r\n* Instead of rewriting packets, let middleboxes *inject* long header QUIC packets. The QUIC version number field identifies that the packet carries bandwidth information. The bandwidth information itself can be encoded as part of the version number, or it can be the payload of the long header packet.\r\n* The receiver verifies if the injected packet is from a on-path device, by verifying the CID pair of the QUIC packet. This works because QUIC deployments use non-zero length CID in at least one direction.\r\n\r\nTo paraphrase, middleboxes that observe a long header QUIC packet can simply copy the Destination CID and Source CID fields of the QUIC packet, and inject a new QUIC packet using the same CID pair, with a special version number(s) indicating that the information is from the middlebox.\r\n\r\nAs said, the benefit of this approach is that it would work with any version of QUIC, and that there would be no negative impact to the throughput of existing QUIC stacks. Also, the protocol can be used by other UDP-based protocols, provided that they define a way for endpoints to agree on the value of CID fields used for validation.\r\n\r\nWDYT?",
       "createdAt": "2024-07-25T00:43:45Z",
-      "updatedAt": "2024-07-25T00:45:03Z",
+      "updatedAt": "2024-07-25T21:32:56Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Christian and I are talking about doing a completely new QUIC version, which addresses the packet drop risk.\r\n\r\nMy understanding is that replacement is far easier than insertion for a middlebox, to the extent that anything else is likely a non-starter.",
+          "createdAt": "2024-07-25T16:33:42Z",
+          "updatedAt": "2024-07-25T16:33:42Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "body": "My assumption has been that the middleboxes that send TRAIN packets are going to be the sophisticated ones and that they can inject packets like they do with ICMP packets. But I could very well be incorrect.\r\n\r\nThat said, I think rewriting is fine.\r\n\r\nSeparately, I would point out that the receiver cannot distinguish between a rewritten packet and an injected packet if Initial packets are allowed to carry the bandwidth information, as they are not encrypted using keys known only to the endpoints.",
+          "createdAt": "2024-07-25T21:32:55Z",
+          "updatedAt": "2024-07-25T21:32:55Z"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "id": "I_kwDOMaSf_M6Q3kfa",
+      "title": "shotgun thumpers",
+      "url": "https://github.com/martinthomson/train-protocol/issues/6",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "I am a bit concerned that the simplistic way for intermediaries to implement the \"tumping\" is to write something like:\r\n~~~\r\n    if(*(uint32_t*)&packet[1] == TRAIN_VERSION) {\r\n        *(uint32_t*)&packet[1] = PACING_RATE_VERSION;\r\n    }\r\n~~~\r\nThis will work well 99.9999% of the time, but if will also catch the 1RTT packets in which the CID bytes happen to match the chosen version, or one of the reserved versions that match rates. There are two dozen such versions, so the probability is about 1/2^28. Not large, but it makes for a silly heisenbug. Pick one of the wrong CIDs and your packets get mangled in traffic.\r\n\r\nOf course, this does not happen if the test is written as:\r\n~~~\r\n    if((packet[0]&0xc0) == 0xc0 && *(uint32_t*)&packet[1] == TRAIN_VERSION) {\r\n        *(uint32_t*)&packet[1] = PACING_RATE_VERSION;\r\n    }\r\n~~~\r\n... but that means we have to fight laziness, because the wrong code is shorter and also \"almost right\".\r\n\r\nSo maybe we should be very explicit about that in the text.",
+      "createdAt": "2024-07-25T16:26:32Z",
+      "updatedAt": "2024-07-25T16:26:59Z",
       "closedAt": null,
       "comments": []
+    },
+    {
+      "number": 8,
+      "id": "I_kwDOMaSf_M6Q5qwa",
+      "title": "the design should be QUIC-version neutral",
+      "url": "https://github.com/martinthomson/train-protocol/issues/8",
+      "state": "OPEN",
+      "author": "kazuho",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Current design requires changes to specification and the program being deployed to the middleboxes, each time a new QUIC version is deployed.\r\n\r\nTo paraphrase, we are introducing the incentive for middlebox vendors to block unknown versions of QUIC to which they cannot provide bandwidth information (or give preferential treatment to some versions of QUIC to which they can provide bandwidth).\r\n\r\nI think what we need to design is a bandwidth notification mechanism that is neutral to QUIC versions.\r\n\r\nOne way of achieving that goal would be to use the special version number solely for exchanging the bandwidth information (or for triggering rewrites). To give an example, and endpoints would exchange QUIC v1 packets as-is, but occasionally also send QUIC vXXXX packets which would be rewritten by the middleboxes.",
+      "createdAt": "2024-07-25T21:52:24Z",
+      "updatedAt": "2024-07-25T22:25:25Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I agree that we risk building an ossification vector. We converge on a mechanism in which we negotiate a \"TRAIN\" version, as in:\r\n\r\n* client starts with version=1, send initial packet, transport parameters indicate support for version=TRAIN,\r\n* server agrees to version=TRAIN, defined as \"just like version 1 but with a different encoding of VN in long packets\",\r\n* intermediaries see version=TRAIN, replace with version=TRAIN(10mbps).\r\n\r\nWith that rule, we would need different version numbers for TRAIN(of Version1), TRAIN(of Version2), etc. But the intermediaries will only recognize TRAIN(version1). Thus ossification.\r\n\r\nThe desired solution would have something like:\r\n\r\n* client starts with version=1, transport parameters indicate support vor V2 and V3, and also for the TRAIN mechanism.\r\n* server accepts version 3, says so in transport parameters, and accepts to use the TRAIN mechanism.\r\n* at some point, client and server send long header packets with version=TRAIN. These packets are decoded with the version selected.\r\n\r\nFor the handshake, I think that implies some kind a train handshake before sending VN=TRAIN. Something like:\r\n\r\n* client starts with version=1, transport parameters indicate support or V2 and V3, and also for the TRAIN mechanism.\r\n* server accepts version 3, says so in transport parameters, and accepts to use the TRAIN mechanism. This is carried in initial and handshake packets with version = 3.\r\n* client  decodes all that, then sends handshake packet with version = TRAIN. \r\n* server receives that packet, knows that TRAIN (or variants) shall be decoded as if it were the negotiated version (3 in that example).\r\n* server sees that the client has sent TRAIN packet, can send TRAIN packets itself.",
+          "createdAt": "2024-07-25T22:07:44Z",
+          "updatedAt": "2024-07-25T22:07:44Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "body": "@huitema Thank you for your comments. I think we are almost on the same page.\r\n\r\n> The desired solution would have something like:\r\n\r\nConsidering that the endpoints are never going to use version=TRAIN for exchanging data, I think the version does not need to be covered by Compatible Version Negotiation. The only information each endpoint need to notify to the peer is that it can decode BANDWIDTH frames.\r\n\r\n> For the handshake, I think that implies some kind a train handshake before sending VN=TRAIN. Something like:\r\n\r\nWhile we can define when version=TRAIN packets should be sent, I am not sure if it's worth defining.\r\n\r\nI might argue that they can be sent at any moment, regardless of the peer having support for train. Doing so has no negative effect (modulo the cost of sending a packet that never gets used), while having the benefit of hiding endpoints' capabilities from getting exposed onto the network.\r\n\r\nEndpoints that are capable of handling version=TRAIN packets will buffer the bandwidth information, and sends the BANDWIDTH frame once 1-RTT keys become available (and if the peer has sent the TP).",
+          "createdAt": "2024-07-25T22:25:24Z",
+          "updatedAt": "2024-07-25T22:25:24Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -158,13 +227,13 @@
       "labels": [],
       "body": "This PR proposes:\r\n\r\n* define a \"trigger\" version,\r\n* use a transport parameter to indicate support of the feature,\r\n* hint that we need to add text specifying use of trigger version by routers",
       "createdAt": "2024-07-24T01:33:03Z",
-      "updatedAt": "2024-07-25T00:43:09Z",
+      "updatedAt": "2024-07-25T23:05:15Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "ch-review-1",
-      "headRefOid": "ace1be8e94eef04367a886e608e3741b7224b691",
+      "headRefOid": "e0492e22cafcc6ae18a31ec33604fd25e83b28f3",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -183,6 +252,13 @@
           "body": "I assumed two trigger versions in the PR, but @kazuho has a point. It would be better to have just one set of trigger values, etc. But then there is the little issue of how to decrypt packets, etc.",
           "createdAt": "2024-07-25T00:43:08Z",
           "updatedAt": "2024-07-25T00:43:08Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "body": "@huitema Thanks. I think all we need to do is to agree on how the Train packets are checksummed. IMO, the easiest way would be to reuse that of QUIC v1 Initial packets with a different salt.\r\n\r\nPS. But taking a step further, I do not think we need to rewrite packets when middleboxes can simply inject them, please see #5.",
+          "createdAt": "2024-07-25T01:05:17Z",
+          "updatedAt": "2024-07-25T01:06:24Z"
         }
       ],
       "reviews": [
@@ -245,6 +321,179 @@
               "updatedAt": "2024-07-25T00:37:40Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DJ875",
+          "commit": {
+            "abbreviatedOid": "95d1367"
+          },
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-25T20:36:29Z",
+          "updatedAt": "2024-07-25T21:21:15Z",
+          "comments": [
+            {
+              "originalPosition": 16,
+              "body": "```suggestion\r\nthat on-path network elements are authorized to rewrite. Receiving packets\r\n```",
+              "createdAt": "2024-07-25T20:36:29Z",
+              "updatedAt": "2024-07-25T21:21:15Z"
+            },
+            {
+              "originalPosition": 25,
+              "body": "Probably we need to discuss this separately?\r\n\r\nAs much as I personally want to see the rewritten packet carry the bandwidth the receiver of that packet can consume, this design does not work well using different routes in both directions (e.g., connection that uses satellite in one direction and DSL in the another).",
+              "createdAt": "2024-07-25T21:11:33Z",
+              "updatedAt": "2024-07-25T21:21:15Z"
+            },
+            {
+              "originalPosition": 58,
+              "body": "If we are to have a mechanism in QUIC that transmits the bandwidth information, I think we need a TP, so that the feature set is negotiated by a secure mechanism (i.e., exchanged as part of the TLS handshake transcript).\r\n\r\nInitial packets can be spoofed, therefore the opt-in signal of Train can be spoofed (by spoofing an Initial packet that carries the trigger version).",
+              "createdAt": "2024-07-25T21:20:19Z",
+              "updatedAt": "2024-07-25T21:21:15Z"
+            },
+            {
+              "originalPosition": 63,
+              "body": "Did you mean\r\n```suggestion\r\n  Bandwidth (i),\r\n```",
+              "createdAt": "2024-07-25T21:21:07Z",
+              "updatedAt": "2024-07-25T21:21:15Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DKlfv",
+          "commit": {
+            "abbreviatedOid": "95d1367"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-25T23:01:19Z",
+          "updatedAt": "2024-07-25T23:01:19Z",
+          "comments": [
+            {
+              "originalPosition": 25,
+              "body": "I am removing that text. Routing is asymmetric, intermediaries do not always know the pacing rate in the other direction.",
+              "createdAt": "2024-07-25T23:01:19Z",
+              "updatedAt": "2024-07-25T23:01:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DKlpI",
+          "commit": {
+            "abbreviatedOid": "95d1367"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-25T23:02:09Z",
+          "updatedAt": "2024-07-25T23:02:09Z",
+          "comments": [
+            {
+              "originalPosition": 58,
+              "body": "Let's discuss the TP or not in a different PR.",
+              "createdAt": "2024-07-25T23:02:09Z",
+              "updatedAt": "2024-07-25T23:02:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DKlsB",
+          "commit": {
+            "abbreviatedOid": "95d1367"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-25T23:02:22Z",
+          "updatedAt": "2024-07-25T23:02:22Z",
+          "comments": [
+            {
+              "originalPosition": 63,
+              "body": "Fixing.",
+              "createdAt": "2024-07-25T23:02:22Z",
+              "updatedAt": "2024-07-25T23:02:22Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "id": "PR_kwDOMaSf_M52f_UR",
+      "title": "Move more to a single new version",
+      "url": "https://github.com/martinthomson/train-protocol/pull/7",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Expand the algorithms for setting and reading signals as well.",
+      "createdAt": "2024-07-25T18:12:46Z",
+      "updatedAt": "2024-07-26T14:42:37Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "new-version",
+      "headRefOid": "79f9229a863f2e1b16832f4571278750a9e70deb",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "body": "I think I'm missing something, but I do not quite follow. Specifically, I do not see how the client decodes the server's first flight (e.g., QUIC v1 Initial).\r\n\r\nConsider the following example:\r\n* client sends a QUIC Initial carrying compatible upgrade (v1, v4, vTBDTRAIN)\r\n* server sends a QUIC vTBDTRAIN packet (IIUC, that is what the PR says)\r\n* no middlebox rewrites the server's first flight\r\n* client receives server's first flight carrying vTBDTRAIN\r\n\r\nNow, the problem is that the client cannot tell if the server's packet was encrypted (i.e., checksummed) using v1 or v4. So it cannot do anything.\r\n\r\nIs the intent to let the server at first send a v1 or v4 depending on the QUIC version it chooses, and then, after there is an acknowledge from the client indicating that the version negotiation is complete, send a vTBDTRAIN packet using the packet protection scheme of the selected version?\r\n\r\nWhile that is possible, I'm not sure if it's very simple. I think the design would be simpler if we just let the endpoints send and receive the QUIC version that they chose, and also let them send vTBDTRAIN packets that do not carry any information of the end-to-end connection (as stated in #8).",
+          "createdAt": "2024-07-26T04:14:32Z",
+          "updatedAt": "2024-07-26T04:14:32Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I think that @kazuho's comment is related to issue #8. My reasoning is the the server should not send VERSION_TRAIN before the client does. That means, let the packets carrying the full handshake carry the negotiated version number. After that, I think we could send \"train probes\" in handshake packets, but sending them as coalesced long header packets in front of 1RTT packets should also works.",
+          "createdAt": "2024-07-26T04:35:58Z",
+          "updatedAt": "2024-07-26T04:35:58Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "NONE",
+          "body": "@huitema \r\n> I think that @kazuho's comment is related to issue https://github.com/martinthomson/train-protocol/issues/8.\r\n\r\nYes.\r\n\r\n> My reasoning is the the server should not send VERSION_TRAIN before the client does. That means, let the packets carrying the full handshake carry the negotiated version number. After that, I think we could send \"train probes\" in handshake packets, but sending them as coalesced long header packets in front of 1RTT packets should also works.\r\n\r\nI'm not fully certain if relying on Handshake packets is a good idea.\r\n\r\nThat is because, as the handshake concludes, QUIC v1 discards the Initial and Handshake keys. Therefore, assuming we want to retrieve bandwidth information after the handshake or when the client migrates to a new path, we have to validate the UDP datagram carrying the bandwidth either by: a) checking the CID-pair (which would be non-zero length in practice) of the vTBDTRAIN packet, or by b) validating the short header QUIC packet that follows the vTBDTRAIN packet.\r\n\r\nEither ways, if vTBDTRAIN packets are to carry only the bandwidth (with potentially having a short header packet coalesced to the same UDP datagram), handshake of any version of QUIC will work. In other words, we achieve QUIC version neutrality, so that would be good.",
+          "createdAt": "2024-07-26T14:42:36Z",
+          "updatedAt": "2024-07-26T14:42:36Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6DJtwk",
+          "commit": {
+            "abbreviatedOid": "79f9229"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "Yes, that works. I will update my own PR to avoid merge conflicts.",
+          "createdAt": "2024-07-25T20:13:34Z",
+          "updatedAt": "2024-07-25T20:13:34Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DJt-1",
+          "commit": {
+            "abbreviatedOid": "79f9229"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-07-25T20:13:50Z",
+          "updatedAt": "2024-07-25T20:13:50Z",
+          "comments": []
         }
       ]
     }
