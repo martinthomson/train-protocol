@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-28T01:05:49.982828+00:00",
+  "timestamp": "2024-07-30T01:01:15.871048+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -86,7 +86,7 @@
       "labels": [],
       "body": "The mechanism provides a bandwidth limit to the receiving endpoint, by rewriting the version field of long header packets. It does require some cooperation of the endpoints:\r\n\r\n* be willing to receive packets with version set to one of the reserved values,\r\n* be willing to send long header packets after the handshake is complete,\r\n* if the bandwidth parameter describes a \"max send rate\", be willing to relay the value to the peer. (This would not be needed if the bandwidth parameter indicated \"max receive rate\".)\r\n\r\nI think we need to define a transport parameter to negotiate that.",
       "createdAt": "2024-07-24T00:59:12Z",
-      "updatedAt": "2024-07-26T00:16:41Z",
+      "updatedAt": "2024-07-28T03:47:39Z",
       "closedAt": null,
       "comments": [
         {
@@ -116,6 +116,13 @@
           "body": "I agree with Kazuho on this point.",
           "createdAt": "2024-07-26T00:16:39Z",
           "updatedAt": "2024-07-26T00:16:39Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I am not sure who agrees on what at this point. The discussion on PR#8 strongly hints that we in fact need a transport parameter. Hard to have a version-neutral variant without that.",
+          "createdAt": "2024-07-28T03:47:38Z",
+          "updatedAt": "2024-07-28T03:47:38Z"
         }
       ]
     },
@@ -434,7 +441,7 @@
       "labels": [],
       "body": "Expand the algorithms for setting and reading signals as well.",
       "createdAt": "2024-07-25T18:12:46Z",
-      "updatedAt": "2024-07-26T14:42:37Z",
+      "updatedAt": "2024-07-28T03:46:28Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
@@ -466,6 +473,13 @@
           "body": "@huitema \r\n> I think that @kazuho's comment is related to issue https://github.com/martinthomson/train-protocol/issues/8.\r\n\r\nYes.\r\n\r\n> My reasoning is the the server should not send VERSION_TRAIN before the client does. That means, let the packets carrying the full handshake carry the negotiated version number. After that, I think we could send \"train probes\" in handshake packets, but sending them as coalesced long header packets in front of 1RTT packets should also works.\r\n\r\nI'm not fully certain if relying on Handshake packets is a good idea.\r\n\r\nThat is because, as the handshake concludes, QUIC v1 discards the Initial and Handshake keys. Therefore, assuming we want to retrieve bandwidth information after the handshake or when the client migrates to a new path, we have to validate the UDP datagram carrying the bandwidth either by: a) checking the CID-pair (which would be non-zero length in practice) of the vTBDTRAIN packet, or by b) validating the short header QUIC packet that follows the vTBDTRAIN packet.\r\n\r\nEither ways, if vTBDTRAIN packets are to carry only the bandwidth (with potentially having a short header packet coalesced to the same UDP datagram), handshake of any version of QUIC will work. In other words, we achieve QUIC version neutrality, so that would be good.",
           "createdAt": "2024-07-26T14:42:36Z",
           "updatedAt": "2024-07-26T14:42:36Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I am a bit concerned that we have 2 pending PRs and a big design question #8. If we believe the argument in #8 calling for the design to be version neutral, then we cannot really use version negotiation. That would move us back to negotiating a transport parameter for \"support of TRAIN\", after which parties can emit packets starting with a long header with \"version = TRAIN\" and CID per path, coalesced with regular \"version=negotiated\" packets. The peer would then echo the bandwidth value found in the overwritten TRAIN headers in a TRAIN frame.\r\n\r\nI could rewrite PR #3 to match that design, but I am a bit concerned that rewriting both PR #3 and this PR (#7) will lead to merge conflict. I would propose that we merge at least one of these 2 PRs first, and then rewrite towards the desired solution in a rewritten PR.",
+          "createdAt": "2024-07-28T03:46:27Z",
+          "updatedAt": "2024-07-28T03:46:27Z"
         }
       ],
       "reviews": [
