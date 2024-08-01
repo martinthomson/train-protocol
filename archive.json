@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-07-30T01:01:15.871048+00:00",
+  "timestamp": "2024-08-01T01:06:32.404916+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -154,7 +154,7 @@
       "labels": [],
       "body": "Current design suggests middleboxes rewrite QUIC packets.\r\n\r\nThis approach has the following problem:\r\n* If middleboxes rewrite ordinary QUIC packets (e.g., V1) as the current draft suggests, it would have negative performance impact to existing stacks, as the rewrite would lead up to packet loss events.\r\n* We could define a trigger version, but that requires coordination on both endpoints. While that is possible, the concern is that the design might become dependent to the internals of specific version of QUIC (see #3). What we prefer is a design neutral to QUIC versions (or a design that works with UDP-based protocols other than QUIC).\r\n\r\nSo what about the following:\r\n* Instead of rewriting packets, let middleboxes *inject* long header QUIC packets. The QUIC version number field identifies that the packet carries bandwidth information. The bandwidth information itself can be encoded as part of the version number, or it can be the payload of the long header packet.\r\n* The receiver verifies if the injected packet is from a on-path device, by verifying the CID pair of the QUIC packet. This works because QUIC deployments use non-zero length CID in at least one direction.\r\n\r\nTo paraphrase, middleboxes that observe a long header QUIC packet can simply copy the Destination CID and Source CID fields of the QUIC packet, and inject a new QUIC packet using the same CID pair, with a special version number(s) indicating that the information is from the middlebox.\r\n\r\nAs said, the benefit of this approach is that it would work with any version of QUIC, and that there would be no negative impact to the throughput of existing QUIC stacks. Also, the protocol can be used by other UDP-based protocols, provided that they define a way for endpoints to agree on the value of CID fields used for validation.\r\n\r\nWDYT?",
       "createdAt": "2024-07-25T00:43:45Z",
-      "updatedAt": "2024-07-25T21:32:56Z",
+      "updatedAt": "2024-07-31T02:44:21Z",
       "closedAt": null,
       "comments": [
         {
@@ -170,6 +170,13 @@
           "body": "My assumption has been that the middleboxes that send TRAIN packets are going to be the sophisticated ones and that they can inject packets like they do with ICMP packets. But I could very well be incorrect.\r\n\r\nThat said, I think rewriting is fine.\r\n\r\nSeparately, I would point out that the receiver cannot distinguish between a rewritten packet and an injected packet if Initial packets are allowed to carry the bandwidth information, as they are not encrypted using keys known only to the endpoints.",
           "createdAt": "2024-07-25T21:32:55Z",
           "updatedAt": "2024-07-25T21:32:55Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Rewriting helps if you consider it likely that there could be an attacker that can observe and inject packets on the path.  The conditions for success there aren't great, but it is an attack modality that is easier to block than document :)\r\n\r\nThe point about the Initial packet is well-taken.  Particularly if an off-path attacker is willing to accept a high risk of failure.  Though I would observe that there are limits to what an attacker might achieve in most of these adaptive bit rate scenarios.",
+          "createdAt": "2024-07-31T02:44:19Z",
+          "updatedAt": "2024-07-31T02:44:19Z"
         }
       ]
     },
@@ -234,7 +241,7 @@
       "labels": [],
       "body": "This PR proposes:\r\n\r\n* define a \"trigger\" version,\r\n* use a transport parameter to indicate support of the feature,\r\n* hint that we need to add text specifying use of trigger version by routers",
       "createdAt": "2024-07-24T01:33:03Z",
-      "updatedAt": "2024-07-25T23:05:15Z",
+      "updatedAt": "2024-07-31T07:29:11Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
@@ -426,6 +433,46 @@
               "updatedAt": "2024-07-25T23:02:22Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DsAOr",
+          "commit": {
+            "abbreviatedOid": "e0492e2"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T07:09:05Z",
+          "updatedAt": "2024-07-31T07:09:16Z",
+          "comments": [
+            {
+              "originalPosition": 58,
+              "body": "My opinion is that QUIC shouldn't need to pass this signal.  Applications will generate their own signaling based on this, as necessary.  For instance, in a streaming video app, the bandwidth cap will determine how the client requests new video chunks.  There is no direct need to tell the server what to do.\r\n\r\nI can't see a generic signaling mechanism being used in most of the cases we're talking about, so I'd rather not define one.",
+              "createdAt": "2024-07-31T07:09:05Z",
+              "updatedAt": "2024-07-31T07:09:16Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6DsJft",
+          "commit": {
+            "abbreviatedOid": "95d1367"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-07-31T07:29:11Z",
+          "updatedAt": "2024-07-31T07:29:11Z",
+          "comments": [
+            {
+              "originalPosition": 58,
+              "body": "The signal can be useful as a hint for congestion control. This is indeed debatable, since the signal indicates a theoretical maximum, not the actual value, and CC will still have to discover the available bandwidth. But BBR, for example, has special code to detect on-path pacers. If the limit is 20 Mbps and the CC algorithms gets it slightly too high, say 21 Mbps, this can result in lots of errors. Knowing the limit would avoid such failure modes. But then again, trusting the limit could result in unnecessary slowdowns.",
+              "createdAt": "2024-07-31T07:29:11Z",
+              "updatedAt": "2024-07-31T07:29:11Z"
+            }
+          ]
         }
       ]
     },
@@ -441,7 +488,7 @@
       "labels": [],
       "body": "Expand the algorithms for setting and reading signals as well.",
       "createdAt": "2024-07-25T18:12:46Z",
-      "updatedAt": "2024-07-28T03:46:28Z",
+      "updatedAt": "2024-07-31T07:27:51Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
@@ -480,6 +527,13 @@
           "body": "I am a bit concerned that we have 2 pending PRs and a big design question #8. If we believe the argument in #8 calling for the design to be version neutral, then we cannot really use version negotiation. That would move us back to negotiating a transport parameter for \"support of TRAIN\", after which parties can emit packets starting with a long header with \"version = TRAIN\" and CID per path, coalesced with regular \"version=negotiated\" packets. The peer would then echo the bandwidth value found in the overwritten TRAIN headers in a TRAIN frame.\r\n\r\nI could rewrite PR #3 to match that design, but I am a bit concerned that rewriting both PR #3 and this PR (#7) will lead to merge conflict. I would propose that we merge at least one of these 2 PRs first, and then rewrite towards the desired solution in a rewritten PR.",
           "createdAt": "2024-07-28T03:46:27Z",
           "updatedAt": "2024-07-28T03:46:27Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Yeah, perhaps we can organize a call to go over the details.  There are a couple of core questions here that might be easier to resolve that way.  My sense is that we have some questions about versions and how they are used.\r\n\r\n@kazuho, you know I'm going to ask you to co-author if you keep providing excellent contributions. :)",
+          "createdAt": "2024-07-31T07:27:49Z",
+          "updatedAt": "2024-07-31T07:27:49Z"
         }
       ],
       "reviews": [
