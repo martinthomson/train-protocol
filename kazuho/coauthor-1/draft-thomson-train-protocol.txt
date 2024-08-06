@@ -6,7 +6,7 @@ Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
 Expires: 7 February 2025                            Private Octopus Inc.
-                                                                  K. Oku
+                                                        奥 一穂 (K. Oku)
                                                                   Fastly
                                                            6 August 2024
 
@@ -364,3 +364,8 @@ Authors' Addresses
    Kazuho Oku
    Fastly
    Email: kazuhooku@gmail.com
+
+   Additional contact information:
+
+      奥 一穂
+      Fastly
