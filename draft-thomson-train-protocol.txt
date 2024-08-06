@@ -4,8 +4,9 @@
 
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
-Intended status: Informational                              23 July 2024
-Expires: 24 January 2025
+Intended status: Informational                                C. Huitema
+Expires: 7 February 2025                            Private Octopus Inc.
+                                                           6 August 2024
 
 
   Transparent Rate Adaptation Indicators for Network Elements (TRAIN)
@@ -45,7 +46,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 24 January 2025.
+   This Internet-Draft will expire on 7 February 2025.
 
 Copyright Notice
 
@@ -77,7 +78,7 @@ Table of Contents
      9.1.  Normative References
      9.2.  Informative References
    Acknowledgments
-   Author's Address
+   Authors' Addresses
 
 1.  Introduction
 
@@ -308,18 +309,7 @@ Table of Contents
 
 9.1.  Normative References
 
-   [BCP14]    Best Current Practice 14,
-              <https://www.rfc-editor.org/info/bcp14>.
-              At the time of writing, this BCP comprises the following:
-
-              Bradner, S., "Key words for use in RFCs to Indicate
-              Requirement Levels", BCP 14, RFC 2119,
-              DOI 10.17487/RFC2119, March 1997,
-              <https://www.rfc-editor.org/info/rfc2119>.
-
-              Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
-              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
-              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+   [BCP14]    "*** BROKEN REFERENCE ***".
 
    [RFC8999]  Thomson, M., "Version-Independent Properties of QUIC",
               RFC 8999, DOI 10.17487/RFC8999, May 2021,
@@ -346,8 +336,13 @@ Acknowledgments
 
    TODO acknowledge.
 
-Author's Address
+Authors' Addresses
 
    Martin Thomson
    Mozilla
    Email: mt@lowentropy.net
+
+
+   Christian Huitema
+   Private Octopus Inc.
+   Email: huitema@huitema.net

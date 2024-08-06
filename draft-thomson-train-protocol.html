@@ -6,6 +6,7 @@
 <meta content="initial-scale=1.0" name="viewport">
 <title>Transparent Rate Adaptation Indicators for Network Elements (TRAIN)</title>
 <meta content="Martin Thomson" name="author">
+<meta content="Christian Huitema" name="author">
 <meta content="
        On-path network elements can sometimes be configured to apply rate limits to
 flows that pass them.  This document describes a method for signaling to
@@ -1028,11 +1029,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">TRAIN Protocol</td>
-<td class="right">July 2024</td>
+<td class="right">August 2024</td>
 </tr></thead>
 <tfoot><tr>
-<td class="left">Thomson</td>
-<td class="center">Expires 24 January 2025</td>
+<td class="left">Thomson &amp; Huitema</td>
+<td class="center">Expires 7 February 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1045,17 +1046,21 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-thomson-train-protocol-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-07-23" class="published">23 July 2024</time>
+<time datetime="2024-08-06" class="published">6 August 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-01-24">24 January 2025</time></dd>
-<dt class="label-authors">Author:</dt>
+<dd class="expires"><time datetime="2025-02-07">7 February 2025</time></dd>
+<dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
       <div class="author-name">M. Thomson</div>
 <div class="org">Mozilla</div>
+</div>
+<div class="author">
+      <div class="author-name">C. Huitema</div>
+<div class="org">Private Octopus Inc.</div>
 </div>
 </dd>
 </dl>
@@ -1098,7 +1103,7 @@ rate limit is.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 24 January 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 7 February 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1174,7 +1179,7 @@ rate limit is.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
             <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1508,13 +1513,7 @@ endpoints.<a href="#section-7-3" class="pilcrow">¶</a></p>
 <dl class="references">
 <dt id="BCP14">[BCP14]</dt>
         <dd>
-<div class="refInstance">Best Current Practice 14, <span>&lt;<a href="https://www.rfc-editor.org/info/bcp14">https://www.rfc-editor.org/info/bcp14</a>&gt;</span>.<br><span>At the time of writing, this BCP comprises the following:</span>
-</div>
-<div class="refInstance" id="RFC2119">
-            <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </div>
-<div class="refInstance" id="RFC8174">
-            <span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </div>
-</dd>
+<span class="refTitle">"*** BROKEN REFERENCE ***"</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8999">[RFC8999]</dt>
         <dd>
@@ -1556,8 +1555,8 @@ endpoints.<a href="#section-7-3" class="pilcrow">¶</a></p>
 </div>
 <div id="authors-addresses">
 <section id="appendix-B">
-      <h2 id="name-authors-address">
-<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
       </h2>
 <address class="vcard">
         <div dir="auto" class="left"><span class="fn nameRole">Martin Thomson</span></div>
@@ -1565,6 +1564,14 @@ endpoints.<a href="#section-7-3" class="pilcrow">¶</a></p>
 <div class="email">
 <span>Email:</span>
 <a href="mailto:mt@lowentropy.net" class="email">mt@lowentropy.net</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Christian Huitema</span></div>
+<div dir="auto" class="left"><span class="org">Private Octopus Inc.</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:huitema@huitema.net" class="email">huitema@huitema.net</a>
 </div>
 </address>
 </section>
