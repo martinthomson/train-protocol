@@ -125,8 +125,10 @@ path.  Congestion signals might indicate a throughput that is different from the
 signaled rate limit.
 
 Endpoints cannot assume that a signaled rate limit is achievable if congestion
-signals indicate otherwise.  That is, endpoints need to respect the send rate
-constraints that are set by a congestion controller.
+signals indicate otherwise.  Congestion could be experienced at a different
+point on the network path than the network element that indicates a rate limit.
+Therefore, endpoints need to respect the send rate constraints that are set by a
+congestion controller.
 
 ## On Path Signal
 
