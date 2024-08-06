@@ -32,7 +32,9 @@ author:
     org: Private Octopus Inc.
     email: huitema@huitema.net
  -
-    fullname: Kazuho Oku
+    fullname:
+      :: 奥 一穂
+      ascii: Kazuho Oku
     org: Fastly
     email: kazuhooku@gmail.com
 
