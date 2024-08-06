@@ -27,6 +27,11 @@ author:
     fullname: Martin Thomson
     organization: Mozilla
     email: mt@lowentropy.net
+ -
+    fullname: Christian Huitema
+    org: Private Octopus Inc.
+    email: huitema@huitema.net
+
 
 normative:
 
