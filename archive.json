@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-04T01:05:53.861081+00:00",
+  "timestamp": "2024-08-06T01:01:35.122533+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -98,7 +98,7 @@
         },
         {
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "> Endpoints can periodically stuff a small, pointless, long header packet in a datagram that they are sending.\r\n\r\nFWIW it is my understanding that such behavior is already allowed explicitly in [Section 14.4.1 of RFC 9000](https://datatracker.ietf.org/doc/html/rfc9000#name-pmtu-probes-containing-sour).\r\n\r\nAll we are doing here is exercising an existing mechanism. We do not need TP. If we find out endpoints break due to seeing long header packets post-handshake, those endpoints are broken.",
           "createdAt": "2024-07-24T22:49:50Z",
           "updatedAt": "2024-07-24T22:49:50Z"
@@ -149,7 +149,7 @@
       "url": "https://github.com/martinthomson/train-protocol/issues/5",
       "state": "OPEN",
       "author": "kazuho",
-      "authorAssociation": "NONE",
+      "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Current design suggests middleboxes rewrite QUIC packets.\r\n\r\nThis approach has the following problem:\r\n* If middleboxes rewrite ordinary QUIC packets (e.g., V1) as the current draft suggests, it would have negative performance impact to existing stacks, as the rewrite would lead up to packet loss events.\r\n* We could define a trigger version, but that requires coordination on both endpoints. While that is possible, the concern is that the design might become dependent to the internals of specific version of QUIC (see #3). What we prefer is a design neutral to QUIC versions (or a design that works with UDP-based protocols other than QUIC).\r\n\r\nSo what about the following:\r\n* Instead of rewriting packets, let middleboxes *inject* long header QUIC packets. The QUIC version number field identifies that the packet carries bandwidth information. The bandwidth information itself can be encoded as part of the version number, or it can be the payload of the long header packet.\r\n* The receiver verifies if the injected packet is from a on-path device, by verifying the CID pair of the QUIC packet. This works because QUIC deployments use non-zero length CID in at least one direction.\r\n\r\nTo paraphrase, middleboxes that observe a long header QUIC packet can simply copy the Destination CID and Source CID fields of the QUIC packet, and inject a new QUIC packet using the same CID pair, with a special version number(s) indicating that the information is from the middlebox.\r\n\r\nAs said, the benefit of this approach is that it would work with any version of QUIC, and that there would be no negative impact to the throughput of existing QUIC stacks. Also, the protocol can be used by other UDP-based protocols, provided that they define a way for endpoints to agree on the value of CID fields used for validation.\r\n\r\nWDYT?",
@@ -166,7 +166,7 @@
         },
         {
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "My assumption has been that the middleboxes that send TRAIN packets are going to be the sophisticated ones and that they can inject packets like they do with ICMP packets. But I could very well be incorrect.\r\n\r\nThat said, I think rewriting is fine.\r\n\r\nSeparately, I would point out that the receiver cannot distinguish between a rewritten packet and an injected packet if Initial packets are allowed to carry the bandwidth information, as they are not encrypted using keys known only to the endpoints.",
           "createdAt": "2024-07-25T21:32:55Z",
           "updatedAt": "2024-07-25T21:32:55Z"
@@ -203,7 +203,7 @@
       "url": "https://github.com/martinthomson/train-protocol/issues/8",
       "state": "OPEN",
       "author": "kazuho",
-      "authorAssociation": "NONE",
+      "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Current design requires changes to specification and the program being deployed to the middleboxes, each time a new QUIC version is deployed.\r\n\r\nTo paraphrase, we are introducing the incentive for middlebox vendors to block unknown versions of QUIC to which they cannot provide bandwidth information (or give preferential treatment to some versions of QUIC to which they can provide bandwidth).\r\n\r\nI think what we need to design is a bandwidth notification mechanism that is neutral to QUIC versions.\r\n\r\nOne way of achieving that goal would be to use the special version number solely for exchanging the bandwidth information (or for triggering rewrites). To give an example, and endpoints would exchange QUIC v1 packets as-is, but occasionally also send QUIC vXXXX packets which would be rewritten by the middleboxes.",
@@ -220,7 +220,7 @@
         },
         {
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "@huitema Thank you for your comments. I think we are almost on the same page.\r\n\r\n> The desired solution would have something like:\r\n\r\nConsidering that the endpoints are never going to use version=TRAIN for exchanging data, I think the version does not need to be covered by Compatible Version Negotiation. The only information each endpoint need to notify to the peer is that it can decode BANDWIDTH frames.\r\n\r\n> For the handshake, I think that implies some kind a train handshake before sending VN=TRAIN. Something like:\r\n\r\nWhile we can define when version=TRAIN packets should be sent, I am not sure if it's worth defining.\r\n\r\nI might argue that they can be sent at any moment, regardless of the peer having support for train. Doing so has no negative effect (modulo the cost of sending a packet that never gets used), while having the benefit of hiding endpoints' capabilities from getting exposed onto the network.\r\n\r\nEndpoints that are capable of handling version=TRAIN packets will buffer the bandwidth information, and sends the BANDWIDTH frame once 1-RTT keys become available (and if the peer has sent the TP).",
           "createdAt": "2024-07-25T22:25:24Z",
           "updatedAt": "2024-07-25T22:25:24Z"
@@ -255,7 +255,7 @@
       "comments": [
         {
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "As @martinthomson says, we do not need a TP.\r\n\r\nBut :+1: to having a trigger version. Unless we do, middleboxes might rewrite handshake packets, which end ups as a packet loss to endpoints that do not understand the Train protocol.\r\n\r\nIMO, trigger version can be independent from the base version (e.g., V1).\r\n\r\nThe protocol can be as simple as below, with zero negotiation:\r\n* the sender unilaterally, and occasionally sends long header packet carrying the trigger version\r\n* middleboxes can rewrite this packet\r\n* the receiver receives the packet, and verifies that the received packet carries the correct CID pair. If they do, and the version number is changed, then that's the signal from the middlebox.\r\n\r\nPS. Thd downside of using the CID pair as a way to prevent off-path spoofing is that Train will not work when QUIC is used with zero-length CIDs _in both directions_. But such use never exist in practice, so we do not need to care.",
           "createdAt": "2024-07-25T00:14:56Z",
           "updatedAt": "2024-07-25T00:19:17Z"
@@ -269,7 +269,7 @@
         },
         {
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "@huitema Thanks. I think all we need to do is to agree on how the Train packets are checksummed. IMO, the easiest way would be to reuse that of QUIC v1 Initial packets with a different salt.\r\n\r\nPS. But taking a step further, I do not think we need to rewrite packets when middleboxes can simply inject them, please see #5.",
           "createdAt": "2024-07-25T01:05:17Z",
           "updatedAt": "2024-07-25T01:06:24Z"
@@ -342,7 +342,7 @@
             "abbreviatedOid": "95d1367"
           },
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2024-07-25T20:36:29Z",
@@ -502,7 +502,7 @@
       "comments": [
         {
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "I think I'm missing something, but I do not quite follow. Specifically, I do not see how the client decodes the server's first flight (e.g., QUIC v1 Initial).\r\n\r\nConsider the following example:\r\n* client sends a QUIC Initial carrying compatible upgrade (v1, v4, vTBDTRAIN)\r\n* server sends a QUIC vTBDTRAIN packet (IIUC, that is what the PR says)\r\n* no middlebox rewrites the server's first flight\r\n* client receives server's first flight carrying vTBDTRAIN\r\n\r\nNow, the problem is that the client cannot tell if the server's packet was encrypted (i.e., checksummed) using v1 or v4. So it cannot do anything.\r\n\r\nIs the intent to let the server at first send a v1 or v4 depending on the QUIC version it chooses, and then, after there is an acknowledge from the client indicating that the version negotiation is complete, send a vTBDTRAIN packet using the packet protection scheme of the selected version?\r\n\r\nWhile that is possible, I'm not sure if it's very simple. I think the design would be simpler if we just let the endpoints send and receive the QUIC version that they chose, and also let them send vTBDTRAIN packets that do not carry any information of the end-to-end connection (as stated in #8).",
           "createdAt": "2024-07-26T04:14:32Z",
           "updatedAt": "2024-07-26T04:14:32Z"
@@ -516,7 +516,7 @@
         },
         {
           "author": "kazuho",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "@huitema \r\n> I think that @kazuho's comment is related to issue https://github.com/martinthomson/train-protocol/issues/8.\r\n\r\nYes.\r\n\r\n> My reasoning is the the server should not send VERSION_TRAIN before the client does. That means, let the packets carrying the full handshake carry the negotiated version number. After that, I think we could send \"train probes\" in handshake packets, but sending them as coalesced long header packets in front of 1RTT packets should also works.\r\n\r\nI'm not fully certain if relying on Handshake packets is a good idea.\r\n\r\nThat is because, as the handshake concludes, QUIC v1 discards the Initial and Handshake keys. Therefore, assuming we want to retrieve bandwidth information after the handshake or when the client migrates to a new path, we have to validate the UDP datagram carrying the bandwidth either by: a) checking the CID-pair (which would be non-zero length in practice) of the vTBDTRAIN packet, or by b) validating the short header QUIC packet that follows the vTBDTRAIN packet.\r\n\r\nEither ways, if vTBDTRAIN packets are to carry only the bandwidth (with potentially having a short header packet coalesced to the same UDP datagram), handshake of any version of QUIC will work. In other words, we achieve QUIC version neutrality, so that would be good.",
           "createdAt": "2024-07-26T14:42:36Z",
           "updatedAt": "2024-07-26T14:42:36Z"
