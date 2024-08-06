@@ -31,6 +31,10 @@ author:
     fullname: Christian Huitema
     org: Private Octopus Inc.
     email: huitema@huitema.net
+ -
+    fullname: Kazuho Oku
+    org: Fastly
+    email: kazuhooku@gmail.com
 
 
 normative:
