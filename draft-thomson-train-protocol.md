@@ -1,5 +1,5 @@
 ---
-title: "Transparent Rate Adaptation Indicators for Network Elements (TRAIN)"
+title: "Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol"
 abbrev: "TRAIN Protocol"
 category: info
 
@@ -40,6 +40,8 @@ author:
 
 
 normative:
+  QUIC: RFC9000
+  INVARIANTS: RFC8999
 
 informative:
 
@@ -66,15 +68,21 @@ Having the network indicate what its rate limiting policy is, in a way that is
 accessible to endpoints, might allow applications to use this inforation when
 adapting their send rate.
 
+The Transparent Rate Adaptation Indications for Networks (TRAIN) protocol is
+negotiated by QUIC endpoints.  This protocol provides a means for network
+elements to signal the maximum available sustained throughput, or rate limits,
+for flows of UDP datagrams that transit that network element to a QUIC endpoint.
+
 
 # Overview
 
-Network elements that have rate limiting policies can use this protocol on any
-QUIC flow containing long header packets.  The network element indicates an
-approximate rate limit by replacing the version field of the QUIC packet.
+QUIC endpoints can negotiate the use of TRAIN by including a transport parameter
+({{tp}}) in the QUIC handshake.  Endpoints then occasionally coalesce a TRAIN
+packet with ordinary QUIC packets that they send.
 
-A number of QUIC versions are reserved for each canonical QUIC version. Each
-version indicates a specific rate limit.
+Network elements that have rate limiting policies can detect flows that include
+TRAIN packets.  The network element can indicate a maximum sustained throughput
+by modifying the TRAIN packet as it transits the network element.
 
 ~~~ aasvg
 +--------+    +---------+    +----------+
@@ -82,17 +90,15 @@ version indicates a specific rate limit.
 | Sender |    | Element |    | Receiver |
 +---+----+    +----+----+    +----+-----+
     |              |              |
-    +---- v1 ----->|              |
-    |              +----- vx ---->|
-    |              |              |  vx ==> rate limit = y
-    |              |              |     ==> v1
+    +--- TRAIN --->|    TRAIN     |
+    |    +QUIC     +--- +rate --->|
+    |              |    +QUIC     |  Validate QUIC packet
+    |              |              |  and Record rate
     |              |              |
 ~~~
 
-QUIC endpoints that support this protocol and receive a long header packet with
-one of these QUIC versions first recover the intended rate limit by mapping the
-version number to a specific rate.  The packet is then processed as normal by
-replacing the rate limit indication with the original or canonical version.
+QUIC endpoints that receive modified TRAIN packets observe the indicated
+version, process the QUIC packet, and then record the indicated rate.
 
 Indicated rate limits apply only in a single direction.  Separate indications
 can be sent for the client-to-server direction and server-to-client direction.
@@ -105,29 +111,41 @@ cannot assume that rate limit indications from one path apply to new paths.
 
 # Applicability
 
-This protocol only works for flows that use specific QUIC versions and only
-where those flows include packets using the long header {{Section 5.1 of
-!RFC8999}}.
+This protocol only works for flows that use the TRAIN packet ({{packet}}).
 
-The information provided to endpoints (or applications at those endpoints) is
-advisory.  The protocol requires that packets are modified as they transit a
-network element, which provides endpoints proof that the network element has the
-power to drop packets.  However, it does not prove that the rate limit that is
-indicated would either be successful; nor does it prove that a higher rate would
-not be successful.  Endpoints that receive this signal therefore need to treat
-the information as advisory.
+The protocol requires that packets are modified as they transit a
+network element, which provides endpoints strong evidence that the network
+element has the power to drop packets; though see {{security}} for potential
+limitations on this.
 
-As an advisory signal, network elements cannot assume that endpoints will
-respect the signal.  Though this might reduce the need for more active rate
-limiting, whether rate limit enforcement is necessary is a matter for network
-policy.
+The rate limit signal that this protocol carries is independent of congestion
+signals, limited to a single path and UDP packet flow, unidirectional, and
+strictly advisory.
 
-The time and scope over which a rate limit applies is not specified.  Rate
-limits might change without being signaled.  The signaled limit can be assumed
-to apply to the flow of packets on the same UDP address tuple for the duration
-of that flow.  Rate limiting policies often apply on the level of a device or
-subscription, but endpoints cannot assume that this is the case.  A separate
-signal can be sent for each flow.
+## Independent of Congestion Signals
+
+Rate limit signals are not a substitute for congestion feedback.  Congestion
+signals, such as acknowledgments, provide information on loss, delay, or ECN
+markings {{?ECN=RFC3168}} that indicate the real-time condition of a network
+path.  Congestion signals might indicate a throughput that is different from the
+signaled rate limit.
+
+Endpoints cannot assume that a signaled rate limit is achievable if congestion
+signals indicate otherwise.  Congestion could be experienced at a different
+point on the network path than the network element that indicates a rate limit.
+Therefore, endpoints need to respect the send rate constraints that are set by a
+congestion controller.
+
+## On Path Signal
+
+Modifying a packet does not prove that the rate limit that is indicated would be
+achievable.  A signal that is sent for a specific flow might be enforced at a
+different scope.  For instance, limits might apply at a network subscription
+level, such that multiple flows receive the same signal.  Nor does a signal
+prove that a higher rate would not be successful.  Endpoints that receive this
+signal therefore need to treat the information as advisory.
+
+## Per-Flow Signal
 
 The same UDP address tuple might be used for multiple QUIC connections.  A
 single signal might be lost or only reach a single application endpoint.
@@ -135,11 +153,26 @@ Network elements that signal about a flow might choose to send additional
 signals, using connection IDs to indicate when new connections could be
 involved.
 
+## Undirectional Signal
+
 The endpoint that receives a rate limit signal is not the endpoint that might
 adapt its sending behavior as a result of receiving the signal.  An endpoint
 might need to communicate the value it receives to its peer in order to ensure
 that the limit is respected.  This document does not define how that signaling
 occurs as this is specific to the application in use.
+
+## Advisory Signal
+
+As an advisory signal, network elements cannot assume that endpoints will
+respect the signal.  Though this might reduce the need for more active rate
+limiting, how rate limit enforcement is applied is a matter for network policy.
+
+The time and scope over which a rate limit applies is not specified.  The
+effective rate limit might change without being signaled.  The signaled limit
+can be assumed to apply to the flow of packets on the same UDP address tuple for
+the duration of that flow.  Rate limiting policies often apply on the level of a
+device or subscription, but endpoints cannot assume that this is the case.  A
+separate signal can be sent for each flow.
 
 
 # Conventions and Definitions
@@ -147,125 +180,255 @@ occurs as this is specific to the application in use.
 {::boilerplate bcp14-tagged-bcp}
 
 
-# Version Mappings
+# TRAIN Packet {#packet}
 
-This document defines version number mappings for QUIC version 1 {{!RFC9000}}
-and version 2 {{!RFC9369}}.  Rate limit mappings are defined for a limited
-number of send rates, as shown in {{table-rates}}.
+A TRAIN packet is a QUIC long header packet that follows the QUIC invariants;
+see {{Section 5.1 of INVARIANTS}}.
+
+{{fig-train-packet}} shows the format of the train packet using the conventions
+from {{Section 4 of INVARIANTS}}.
+
+~~~ artwork
+TRAIN Packet {
+  Header Form (1) = 1,
+  Reserved (1),
+  Rate Signal (6),
+  Version (32) = 0xTBD,
+  Destination Connection ID Length (8),
+  Destination Connection ID (0..2040),
+  Source Connection ID Length (8) = 0,
+}
+~~~
+{: #fig-train-packet title="TRAIN Packet Format"}
+
+The most significant bit (0x80) of the packet indicates that this is a QUIC long
+header packet.  The next bit (0x40) is reserved and can be set according to
+{{!QUIC-BIT=RFC9287}}.
+
+The entire payload of the TRAIN packet is carried in the Rate Signal field that
+forms the low 6 bits (0x3f) of the first byte.  Values for this field are
+described in {{rate-signal}}.
+
+This packet includes a Destination Connection ID field that is set to the same
+value as other packets in the same datagram; see {{Section 12.2 of QUIC}}.
+
+The Source Connection ID Length field is set to zero, meaning that the Source
+Connection ID field is empty.  TRAIN packets can still be sent during the QUIC
+handshake; the Source Connection ID field in other packets might be needed to
+successfully complete a handshake.
+
+TRAIN packets SHOULD be included as the first packet in a datagram.  This is
+necessary in many cases for QUIC versions 1 and 2 because packets with a short
+header cannot precede any other packets.
+
+
+## Rate Signals {#rate-signal}
 
 {:aside}
 > Note: The exact set of rates that are included is subject to negotiation.
+> We should aim to find typical rate limits that are used in real networks
+> and by real applications.
 
-| Rate Limit | Version 1 | Version 2 |
-|--:|:--|:--|
-| 1Mbps      | 0xTBD | 0xTBD |
-| 2Mbps      | 0xTBD | 0xTBD |
-| 3Mbps      | 0xTBD | 0xTBD |
-| 4Mbps      | 0xTBD | 0xTBD |
-| 5Mbps      | 0xTBD | 0xTBD |
-| 7Mbps      | 0xTBD | 0xTBD |
-| 10Mbps      | 0xTBD | 0xTBD |
-| 15Mbps      | 0xTBD | 0xTBD |
-| 20Mbps      | 0xTBD | 0xTBD |
-| 50Mbps      | 0xTBD | 0xTBD |
-{: #table-rates title="Version and Rate Limit Mappings"}
+The Rate Signal field of a TRAIN packet is set to 0xTBD when sent by a QUIC
+endpoint.  Receiving value indicates that there is no rate limit in place or
+that the TRAIN protocol is not supported by network elements on the path.
 
-Packets for each of these versions is processed exactly as they would be for
-QUIC version 1 or QUIC version 2.  In particular, when a packet with one of
-these versions is received, the value of the version field is replaced by the
-version number for either QUIC version 1 (0x00000001) or QUIC version 2
-(0x6b3343cf).  Thus, the packet protection mechanism used by the canonical QUIC
-version is identical and AEAD decryption would fail if the limit-specific
-version number is left in place.
+The values from {{table-rates}} are specified to carry a the corresponding rate
+limit signal.
 
-For example, the example Retry packet from {{Appendix A.4 of RFC9369}} might be
-modified to indicate a rate limit of TBD to produce a packet of:
+| Rate Signal | Rate Limit |
+|:------------|:-----------|
+| 0xTBD       | X Mbps     |
+| 0xTBD       | X Mbps     |
+| 0xTBD       | X Mbps     |
+| 0xTBD       | X Mbps     |
+| 0xTBD       | X Mbps     |
+| 0xTBD       | X Mbps     |
+| 0xTBD       | X Mbps     |
+| 0xTBD       | X Mbps     |
+{: #table-rates title="Table of Rate Signals and Rate Limits"
 
-~~~
-cfXXXXXXXX0008f067a5502a4262b574 6f6b656ec8646ce8bfe33952d9555436
-65dcc7b6
-~~~
+All other values are reserved.
 
-But the 4 bytes of the version number will be restored to 0x6b3343cf before
-attempting to process the packet further.
+{:aside}
+> TODO: Work out how reserved values can be used, if at all.
+
+
+## Processing TRAIN Packets
+
+Processing a TRAIN packet involves reading the value from the Rate Signal field.
+However, this value MUST NOT be used unless another packet from the same
+datagram is successfully processed.  Therefore, a TRAIN packet always needs to
+be coalesced with other QUIC packets.
+
+A TRAIN packet is defined by the use of the longer header bit (0x80 in the first
+byte) and the TRAIN protocol version (0xTBD in the next four bytes).  A TRAIN
+packet MUST be discarded, along with any packets that come after it in the same
+datagram, if the Source Connection ID Length is non-zero.
+
+A TRAIN packet MUST be discarded if the Destination Connection ID does not match
+one recognized by the receiving endpoint.
+
+
+# Negotiating TRAIN {#tp}
+
+A QUIC endpoint indicates that it is willing to receive TRAIN packets by
+including the train_supported transport parameter (0xTBD).
+
+This transport parameter is valid for QUIC versions 1 {{QUIC}} and 2
+{{!QUICv2=RFC9369}} and any other version that recognizes the QUIC versions and
+transport parameter registries; see {{iana}}.
 
 
 # Deployment
 
-Rate limiting signals that are applied in this way do not guarantee that the
-signal is successfully received.
-
-The primary cost associated with the application of rate limit signals is the
-potential for the packet to be dropped as a consequence of the changed version.
-An endpoint that does not recognize these new versions will treat the
-modification as damage and discard the packet.
-
-{:aside}
-> TODO: do we need to define a new QUIC version where support for that version
-> also indicates support for this feature?  That might allow endpoints to know
-> that their long header packets, if modified, won't get dropped.
-
-{:aside}
-> TODO: determine whether we want a frame that solicits the sending of a long
-> header packet.
+QUIC endpoints can enable the use of the TRAIN protocol by sending TRAIN packets
+{{packet}}.  Network elements then apply or replace the Rate Signal field
+({{apply}}) according to their policies.
 
 
-## Changing Rate Limit Signals
+## Applying Rate Limit Signals {#apply}
+
+A network element detects a TRAIN packet by observing that a packet has a QUIC
+long header and the TRAIN protocol version of 0xTBD.
+
+A network element then conditionally replaces the six bits of the Rate Signal
+field with a value of its choosing.
 
 A network element might receive a packet that already includes a rate limit
 signal.  If the network element wishes to signal a lower rate limit, they can
-replace the Version field with a different value that indicates the lower limit.
-If the network element wishes to signal a higher rate limit, they leave the
-signal alone, preserving the signal from the network element that has a lower
-rate limit policy.
+replace the Rate Signal field with a different value that indicates the lower
+limit.  If the network element wishes to signal a higher rate limit, they leave
+the Rate Signal field alone, preserving the signal from the network element that
+has a lower rate limit policy.
+
+The following pseudocode indicates how a TRAIN packet might be detected and
+replaced.  This assumes a target rate that is preconfigured and a means of
+comparing the rate signal in the packet to the target rate signal.
+
+~~~ pseudocode
+target_rate_signal = rate_signal_for(target_rate)
+
+is_long = packet[0] & 0x80 == 0x80
+is_train = compare(packet[1..5], TRAIN_VERSION)
+if is_long and is_train:
+  packet_rate_signal = packet[0] & 0x3f
+  if target_rate_signal.is_lower_than(packet_rate_signal):
+    packet[0] = packet[0] & 0xc0 | target_rate_signal
+~~~
+
+{:aside}
+> TODO: When defining the signal values, make this comparison easy.
 
 
-## Providing Opportunities to Attach Rate Limit Signals {#bogus-long}
+## Providing Opportunities to Apply Rate Limit Signals {#extra-packets}
 
-A UDP that contains QUIC packets does not always use the long header.  For
-example, a connection can migrate to a new path without using anything other
-than a short header on that new path.  Endpoints that wish to offer network
-elements the option to add rate limit markings can send long header packets
+Endpoints that wish to offer network elements the option to add rate limit
+markings can send TRAIN packets at any time.
 
-Long header packets might indicate the use of packet protection keys that are
-long discarded by an endpoint.  Endpoints that receive long header packets can
-process rate limit signals before attempting to remove packet protection or
-before discarding these packets.
+{:aside}
+> TODO: Define a new frame type for requesting that a peer send a TRAIN packet.
 
-An endpoint that send long header packets for this purpose SHOULD send those
-packets as the first packet of a datagram, including additional valid packets.
-An endpoint that receives and discards a packet when there are no valid packets
-in the datagram SHOULD ignore any rate limit signal.  Such a datagram might be
+Endpoints MUST send any TRAIN packet they send as the first packet of a
+datagram, coalesced with additional packets.  An endpoint that receives and
+discards a TRAIN without also successfully processing another packets from the
+same datagram SHOULD ignore any rate limit signal.  Such a datagram might be
 entirely spoofed.
 
 
-
-# Security Considerations
+# Security Considerations {#security}
 
 The modification of packets provides endpoints proof that a network element is
 in a position to drop datagrams and thereby enforce the indicated rate limit.
-{{bogus-long}} suggests that endpoints only accept signals if the datagram
+{{extra-packets}} states that endpoints only accept signals if the datagram
 contains a packet that it accepts to prevent an off-path attacker from inserting
 spurious rate limit signals.
+
+{:aside}
+> TODO: Write up the off-path attack and acknowledge the limits of what can be
+> done to avoid it.
 
 The actual value of the rate limit signal is not authenticated.  Any signal
 might be incorrectly set in order to encourage endpoints to behave in ways that
 are not in their interests.  Endpoints are free to ignore limits that they think
-are incorrect.
+are incorrect.  The congestion controller employed by a sender provides
+real-time information about the rate at which the network path is delivering
+data.
 
 Similarly, if there is a strong need to ensure that a rate limit is respected,
 network elements cannot assume that the signaled limit will be respected by
 endpoints.
 
+## Privacy {#privacy}
 
-
-# IANA Considerations
-
-This document registers many new QUIC versions.
+Any network element that can observe the content of that packet can read the
+rate limit that was applied.
 
 {:aside}
-> TODO: actually pick some numbers and register them.
+> TODO: Write more.
 
+
+# IANA Considerations {#iana}
+
+This document registers a new QUIC version ({{iana-version}} and a QUIC
+transport parameter {{iana-tp}}.
+
+
+## TRAIN Version {#iana-version}
+
+This document registers the following entry to the "QUIC Versions" registry
+maintained at <https://www.iana.org/assignments/quic>.
+
+Value:
+: 0xTBD
+
+Status:
+: permanent
+
+Specification:
+: This document
+
+Change Controller:
+: IETF (iesg@ietf.org)
+
+Contact:
+: QUIC Working Group (quic@ietf.org)
+
+Notes:
+: TRAIN Protocol
+{: spacing="compact"}
+
+
+## train_supported Transport Parameter {#iana-tp}
+
+This document registers the grease_quic_bit transport parameter in the "QUIC
+Transport Parameters" registry established in {{Section 22.3 of QUIC}}. The
+following fields are registered:
+
+Value:
+: 0xTBD
+
+Parameter Name:
+: train_supported
+
+Status:
+: Permanent
+
+Specification:
+: This document
+
+Date:
+: This date
+
+Change Controller:
+: IETF (iesg@ietf.org)
+
+Contact:
+: QUIC Working Group (quic@ietf.org)
+
+Notes:
+: (none)
+{: spacing="compact"}
 
 --- back
 
