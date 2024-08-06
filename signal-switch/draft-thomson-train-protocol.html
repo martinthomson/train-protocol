@@ -1337,8 +1337,10 @@ markings <span>[<a href="#ECN" class="cite xref">ECN</a>]</span> that indicate t
 path.  Congestion signals might indicate a throughput that is different from the
 signaled rate limit.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <p id="section-3.1-2">Endpoints cannot assume that a signaled rate limit is achievable if congestion
-signals indicate otherwise.  That is, endpoints need to respect the send rate
-constraints that are set by a congestion controller.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+signals indicate otherwise.  Congestion could be experienced at a different
+point on the network path than the network element that indicates a rate limit.
+Therefore, endpoints need to respect the send rate constraints that are set by a
+congestion controller.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="on-path-signal">
