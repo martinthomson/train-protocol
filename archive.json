@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-06T01:01:35.122533+00:00",
+  "timestamp": "2024-08-08T01:02:00.351605+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -62,7 +62,7 @@
       "labels": [],
       "body": "We have a risk that some \"man on the side\" will inject spoofed packets for fun and profit. We need to consider that in the security section. We have basically two level of protection:\r\n\r\n1) The attacker needs to see the original traffic in order to learn connection IDs, etc.\r\n2) The receiver can verify that the packet decrypts correctly after resetting the version ID.\r\n\r\nThe combination of the two is probably OK: it proves that the network element was able to receive a packet and change it. But in the case of packets sent after the handshake completes, the keys have been discarded and there is no way to do any verification. The only security is the check of the CIDs. Is that sufficient?",
       "createdAt": "2024-07-24T00:44:35Z",
-      "updatedAt": "2024-07-24T14:29:57Z",
+      "updatedAt": "2024-08-07T20:19:50Z",
       "closedAt": null,
       "comments": [
         {
@@ -71,6 +71,13 @@
           "body": "I currently have text in the draft that says that you only accept signals that have the modified version when there is a packet in the same datagram that is accepted.  This does not prevent an off-path attacker that is able to observe a valid packet from trying to race a modified packet toward the receiver, but I think that this is the best we can manage.",
           "createdAt": "2024-07-24T14:29:56Z",
           "updatedAt": "2024-07-24T14:29:56Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "(oops, wrong window)",
+          "createdAt": "2024-08-07T20:07:19Z",
+          "updatedAt": "2024-08-07T20:19:50Z"
         }
       ]
     },
@@ -192,9 +199,17 @@
       "labels": [],
       "body": "I am a bit concerned that the simplistic way for intermediaries to implement the \"tumping\" is to write something like:\r\n~~~\r\n    if(*(uint32_t*)&packet[1] == TRAIN_VERSION) {\r\n        *(uint32_t*)&packet[1] = PACING_RATE_VERSION;\r\n    }\r\n~~~\r\nThis will work well 99.9999% of the time, but if will also catch the 1RTT packets in which the CID bytes happen to match the chosen version, or one of the reserved versions that match rates. There are two dozen such versions, so the probability is about 1/2^28. Not large, but it makes for a silly heisenbug. Pick one of the wrong CIDs and your packets get mangled in traffic.\r\n\r\nOf course, this does not happen if the test is written as:\r\n~~~\r\n    if((packet[0]&0xc0) == 0xc0 && *(uint32_t*)&packet[1] == TRAIN_VERSION) {\r\n        *(uint32_t*)&packet[1] = PACING_RATE_VERSION;\r\n    }\r\n~~~\r\n... but that means we have to fight laziness, because the wrong code is shorter and also \"almost right\".\r\n\r\nSo maybe we should be very explicit about that in the text.",
       "createdAt": "2024-07-25T16:26:32Z",
-      "updatedAt": "2024-07-25T16:26:59Z",
+      "updatedAt": "2024-08-07T16:58:52Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I agree that the new design will fix the issue. Messing with the top byte of a V1 packet will cause the checksum to fail.",
+          "createdAt": "2024-08-07T16:58:51Z",
+          "updatedAt": "2024-08-07T16:58:51Z"
+        }
+      ]
     },
     {
       "number": 8,
@@ -226,6 +241,150 @@
           "updatedAt": "2024-07-25T22:25:24Z"
         }
       ]
+    },
+    {
+      "number": 11,
+      "id": "I_kwDOMaSf_M6SB3BN",
+      "title": "Attack by malicious endpoint",
+      "url": "https://github.com/martinthomson/train-protocol/issues/11",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We are worried about attacks by the network, but it is also possible for an endpoint to send the 6bits in the header to an arbitrary value. Maybe this is just a variant of the spoofing attack, but it is simpler to implement. And endpoint that wants to sabotage a local network could set the 6bits to indicate \"tons of bandwidth\" and DOS its own connection...",
+      "createdAt": "2024-08-06T05:14:14Z",
+      "updatedAt": "2024-08-07T16:57:12Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Given that the endpoint that can spoil the message is also the endpoint responsible for sending, I'm struggling to see how this would be a problem.",
+          "createdAt": "2024-08-06T05:20:51Z",
+          "updatedAt": "2024-08-06T05:20:51Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Correct. The malicious endpointcannot really do anything useful this way. OTOH, if the endpoint could report a fake value to the peer, tricking that peer into sending too much data.\r\n\r\nThis looks like a variant of spoofed ACKs.",
+          "createdAt": "2024-08-06T06:13:27Z",
+          "updatedAt": "2024-08-06T06:13:27Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Yes, if we provide a feedback signaling mechanism, that will be vulnerable to all sorts of misrepresentation.  Again, we should acknowledge and move on.",
+          "createdAt": "2024-08-06T09:23:16Z",
+          "updatedAt": "2024-08-06T09:23:16Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Not too sure above \"move on\". We did include in QUIC a defense against spoofed ACK. We could easily include a defense about spoofed reports. For example, in some TRAIN packets, the server puts a specific value in the 6 bits. If the client reports a value greater than that, the server knows that TRAIN cannot be trusted on that path.",
+          "createdAt": "2024-08-06T13:56:35Z",
+          "updatedAt": "2024-08-06T13:56:35Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Is there a reason to talk specifically about attack from endpoints?\r\n\r\nMy understanding is that they are indistinguishable from attacks by middleboxes, as the bandwidth information is not covered by AEAD.\r\n\r\nIt might make sense to point out that the receiver of TRAIN can mount the same attack as middleboxes might, but that would be it, I think.",
+          "createdAt": "2024-08-07T00:37:57Z",
+          "updatedAt": "2024-08-07T00:37:57Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Maybe close this one, but retain the idea that endpoints could try to find out fakers (middlepoints or endpoint) by sending a probe with some arbitrary value, and verify that the echoed value is lower or equal. Kind of like setting holes in the sequence number to catch optimistic ACK.",
+          "createdAt": "2024-08-07T16:57:11Z",
+          "updatedAt": "2024-08-07T16:57:11Z"
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "id": "I_kwDOMaSf_M6SI_yD",
+      "title": "Source Connection ID value",
+      "url": "https://github.com/martinthomson/train-protocol/issues/13",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "What do we set this to?  I've suggested that this be empty, but that might be inconsistent with other packets in the same datagram.\r\n\r\n",
+      "createdAt": "2024-08-06T23:13:16Z",
+      "updatedAt": "2024-08-07T16:48:24Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "body": "We have two contracts that have different properties.\r\n\r\nOne is the three-party contract between the endpoints and the network device. I think we are in agreement that network devices must take the version number field (which will be vTRAIN) and the first byte into consideration, and may also take DCID into consideration. IMO, the flip side is that there is no necessity to be specific about how the SCID field is used between the endpoints.\r\n\r\nThe second contract is the two-party contract between the endpoints. As the RFCs state, QUIC connections are identified using CIDs.\r\n\r\nThe two contracts are going to be inherently different in the details. The three-party contract will allow CIDs as large as 2040 bits, because that's the Invariant. The two-party contract of QUIC v1 forbids use of CIDs longer than 160 bits.\r\n\r\nI think this is a precedence that we have set. Nodes that work in a way that is neutral to QUIC versions have to work within the room defined by RFC 8999. Actual encoding of CID fields are governed by each QUIC version, which is a two-party contract.",
+          "createdAt": "2024-08-07T00:19:38Z",
+          "updatedAt": "2024-08-07T00:19:38Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "One alternative we have here is to let SCID be set to match the value from other long header packets in the datagram, if there are other long header packets present, but to require it to be empty otherwise.",
+          "createdAt": "2024-08-07T01:25:31Z",
+          "updatedAt": "2024-08-07T01:25:31Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@martinthomson \r\n> One alternative we have here is to let SCID be set to match the value from other long header packets in the datagram, if there are other long header packets present, but to require it to be empty otherwise.\r\n\r\nI think this works.\r\n\r\nIn the case of coalescing with long header packets, this approach has the least impact to existing implementations and to future versions of QUIC. In the case of coalescing with short header packets, any QUIC version only needs DCID to route the packet; that is a property of Invariants.",
+          "createdAt": "2024-08-07T02:01:09Z",
+          "updatedAt": "2024-08-07T02:01:09Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "+1 on matching other long headers in the packet, empty if only short headers.\r\n\r\nIt is the right compromise between compatibility and privacy. If there are only short header packets in the datagram, adding a source CID leaks information, enables correlation of flows, etc. But if there are long headers, there is no info leaks, and compatibility requires adding a matching source ID.",
+          "createdAt": "2024-08-07T16:46:28Z",
+          "updatedAt": "2024-08-07T16:48:24Z"
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "id": "I_kwDOMaSf_M6SJcPY",
+      "title": "Rate limit or rate limit over time",
+      "url": "https://github.com/martinthomson/train-protocol/issues/14",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Given that rate limit is applied over a period of time, it might make sense to signal what that time is.\r\n\r\nOne option is to fix the time window (or token bucket depth).  Another might be to specify a number of time windows as part of the rate specification.\r\n\r\nThe problem with having multiple time buckets is that it makes a straight linear comparison more difficult.  Is 5Mbps over 4 seconds higher than 4Mbps over 5 seconds (or 6 seconds)?",
+      "createdAt": "2024-08-07T01:11:44Z",
+      "updatedAt": "2024-08-07T16:52:10Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Yes. I mean we should specify the comparison as:\r\n~~~\r\n x > a === (x.rate > a.rate || (x.rate == a.rate && x.period < a.period))\r\n~~~\r\nThen allocate code point that that are strictly ordered, allowing a straight 6 bit compare by the middle boxes.",
+          "createdAt": "2024-08-07T16:52:08Z",
+          "updatedAt": "2024-08-07T16:52:08Z"
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "id": "I_kwDOMaSf_M6SJj_T",
+      "title": "Pick some limits",
+      "url": "https://github.com/martinthomson/train-protocol/issues/15",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "We need to draw on two sources for this: the rates that network operators set in practice; and, the rates that video hosting services operate at in practice.\r\n\r\nThis might not need to be the union of the two sets, nor does it necessarily need to be the intersection of the two sets, though I would suggest that something closer to the intersection is superior.",
+      "createdAt": "2024-08-07T01:33:58Z",
+      "updatedAt": "2024-08-07T01:33:58Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
@@ -234,21 +393,21 @@
       "id": "PR_kwDOMaSf_M52R5o2",
       "title": "Transport parameter and trigger version",
       "url": "https://github.com/martinthomson/train-protocol/pull/3",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "huitema",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "This PR proposes:\r\n\r\n* define a \"trigger\" version,\r\n* use a transport parameter to indicate support of the feature,\r\n* hint that we need to add text specifying use of trigger version by routers",
       "createdAt": "2024-07-24T01:33:03Z",
-      "updatedAt": "2024-07-31T07:29:11Z",
+      "updatedAt": "2024-08-06T09:28:47Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "ch-review-1",
       "headRefOid": "e0492e22cafcc6ae18a31ec33604fd25e83b28f3",
-      "closedAt": null,
+      "closedAt": "2024-08-06T09:28:47Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
@@ -481,21 +640,21 @@
       "id": "PR_kwDOMaSf_M52f_UR",
       "title": "Move more to a single new version",
       "url": "https://github.com/martinthomson/train-protocol/pull/7",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinthomson",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Expand the algorithms for setting and reading signals as well.",
       "createdAt": "2024-07-25T18:12:46Z",
-      "updatedAt": "2024-07-31T07:27:51Z",
+      "updatedAt": "2024-08-06T09:28:47Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "new-version",
       "headRefOid": "79f9229a863f2e1b16832f4571278750a9e70deb",
-      "closedAt": null,
+      "closedAt": "2024-08-06T09:28:47Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
@@ -561,6 +720,363 @@
           "body": "",
           "createdAt": "2024-07-25T20:13:50Z",
           "updatedAt": "2024-07-25T20:13:50Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "id": "PR_kwDOMaSf_M53gxMO",
+      "title": "Add Christian as author.",
+      "url": "https://github.com/martinthomson/train-protocol/pull/9",
+      "state": "MERGED",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-08-06T02:00:20Z",
+      "updatedAt": "2024-08-06T02:23:42Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "022b282cbc687571308770e137facba0e1450691",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "author-ch",
+      "headRefOid": "6a1948d46058f6af5c98f4c46dd245316ae123d9",
+      "closedAt": "2024-08-06T02:23:38Z",
+      "mergedAt": "2024-08-06T02:23:38Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "704f8984eb13db8d31c6f077a917f5d59185c9c1"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6EVGpm",
+          "commit": {
+            "abbreviatedOid": "4803f62"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T02:01:40Z",
+          "updatedAt": "2024-08-06T02:01:41Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "```suggestion\r\n  -\r\n```",
+              "createdAt": "2024-08-06T02:01:41Z",
+              "updatedAt": "2024-08-06T02:01:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6EVGuC",
+          "commit": {
+            "abbreviatedOid": "270f840"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T02:01:59Z",
+          "updatedAt": "2024-08-06T02:02:00Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "```suggestion\r\n    fullname: Christian Huitema\r\n    org: Private Octopus Inc.\r\n    email: huitema@huitema.net\r\n```",
+              "createdAt": "2024-08-06T02:01:59Z",
+              "updatedAt": "2024-08-06T02:02:00Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "id": "PR_kwDOMaSf_M53g7GV",
+      "title": "Rework design",
+      "url": "https://github.com/martinthomson/train-protocol/pull/10",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "This changes the design to be a discrete packet.  The signal is carried in the low six bits of the first octet (which is easy to rewrite).\r\n\r\nPackets with this version and sent independent of the negotiated version.\r\n\r\nI took a few liberties, but there are still a lot of TODO items in here.",
+      "createdAt": "2024-08-06T02:43:13Z",
+      "updatedAt": "2024-08-07T00:00:08Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "704f8984eb13db8d31c6f077a917f5d59185c9c1",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "signal-switch",
+      "headRefOid": "279a6ed9bb865808b1821c3b766d66c1f472fa76",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6EWDi_",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Thank you for revising the text. Looks good to me.\r\n\r\nI've left my comments below, but I'm fine merging this PR in its current form and having the discussion later.",
+          "createdAt": "2024-08-06T06:18:43Z",
+          "updatedAt": "2024-08-06T06:32:04Z",
+          "comments": [
+            {
+              "originalPosition": 121,
+              "body": "Not that we have to do in this PR, but do we want to point out that the congestion point might be somewhere else that the node that is advertising the rate limit?",
+              "createdAt": "2024-08-06T06:18:43Z",
+              "updatedAt": "2024-08-06T06:32:04Z"
+            },
+            {
+              "originalPosition": 230,
+              "body": "I wonder if this is a needless restriction due to following reasons:\r\n* Future versions of QUIC might use SCID for different purposes.\r\n* QUIC v1 allows use of long header packets mid-connection (see [Section 14.4.1 of RFC 9000](https://datatracker.ietf.org/doc/html/rfc9000#name-pmtu-probes-containing-sour)), but there is no such restriction. I'm not sure if there is a reason to diverge from the design that we already have.\r\n\r\nMy preference of moving forward would be to state SCID and DCID fields should be filled as defined by the QUIC version used by the endpoints, and add a reference to the section of RFC 9000 pointed out above.",
+              "createdAt": "2024-08-06T06:26:33Z",
+              "updatedAt": "2024-08-06T06:32:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6EXgBl",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T09:16:13Z",
+          "updatedAt": "2024-08-06T09:16:14Z",
+          "comments": [
+            {
+              "originalPosition": 230,
+              "body": "Yeah, I thought about that as well.  But this is a packet that uses the TRAIN version, for which we can define the use of the SCID field.  Absent a strong reason to set it to something specific, it's best to save the extra bytes.\r\n\r\nThat is, if another QUIC version that is in use needs the field, then they can describe how to fill out the field in packets for that version.\r\n\r\n(In retrospect, perhaps we could have removed this field from the invariants...)",
+              "createdAt": "2024-08-06T09:16:13Z",
+              "updatedAt": "2024-08-06T09:16:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6EXgYS",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T09:16:52Z",
+          "updatedAt": "2024-08-06T09:16:52Z",
+          "comments": [
+            {
+              "originalPosition": 121,
+              "body": "Good call, I added something.",
+              "createdAt": "2024-08-06T09:16:52Z",
+              "updatedAt": "2024-08-06T09:16:52Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6Eaqnr",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T15:05:59Z",
+          "updatedAt": "2024-08-06T15:05:59Z",
+          "comments": [
+            {
+              "originalPosition": 230,
+              "body": "Thanks.\r\n\r\nAm I correct to interpret what you are saying is that, for train packets used by QUIC v1, we can define how the SCID field is filled, but we might want to keep room for future QUIC versions to do something else?\r\n\r\nIf that's your argument, you have my +1.",
+              "createdAt": "2024-08-06T15:05:59Z",
+              "updatedAt": "2024-08-06T15:05:59Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6Ebzv-",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T17:29:27Z",
+          "updatedAt": "2024-08-06T17:29:27Z",
+          "comments": [
+            {
+              "originalPosition": 230,
+              "body": "I think the format of the TRAIN packet must be defined by the TRAIN version number. The parser logic is \"look at the VN, recognize the version and the packet type, parse accordingly.\" This does not involve looking at other coalesced packets in the same datagram. If we decide to change the format, we will have to set VN=TRAIN2.",
+              "createdAt": "2024-08-06T17:29:27Z",
+              "updatedAt": "2024-08-06T17:29:27Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6Eb4Wr",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T17:39:53Z",
+          "updatedAt": "2024-08-06T17:39:53Z",
+          "comments": [
+            {
+              "originalPosition": 230,
+              "body": "RFC 9000 section 12.2 says: \"Receivers MAY route based on the information in the first packet contained in a UDP datagram. Senders MUST NOT coalesce QUIC packets with different connection IDs into a single UDP datagram. Receivers SHOULD ignore any subsequent packets with a different Destination Connection ID than the first packet in the datagram.\r\n\r\nSuppose a coalesced packet with: \"Long, V=TRAIN, DCID=X, SCID=NULL\", then \"Long, type=handshake, V= 1, DCID=X, SCID=S\". Arguably, it does not meet the \"MUST NOT\", because the SCID of the first and second packets have different SCID.\r\n\r\nIf we want to not break that RFC 9000 rule, then if TRAIN packets are coalesced with long header packets, the SCID MUST be set to the same value used in the long header packets. ",
+              "createdAt": "2024-08-06T17:39:53Z",
+              "updatedAt": "2024-08-06T17:39:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6Eb5H5",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T17:41:39Z",
+          "updatedAt": "2024-08-06T17:41:39Z",
+          "comments": [
+            {
+              "originalPosition": 230,
+              "body": "On the other hand, if the TRAIN packet is coalesced only with short header packet, then filling in the SCID is arguably a privacy leak.",
+              "createdAt": "2024-08-06T17:41:39Z",
+              "updatedAt": "2024-08-06T17:41:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6Eb7Fg",
+          "commit": {
+            "abbreviatedOid": "279a6ed"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "I am saying \"approve\" for practical reason: we need to add more text on deployment, security considerations, actual rate limits and possibly some kind of \"bucket size\" or \"enforcement period\", and maybe a discussion of extra frames like \"send TRAIN now\" or \"here is the TRAIN that I received\". For that, it is more convenient to just merge this PR, and have a base on which we can work.\r\n\r\nWe have a point of disagreement on the SCID of TRAIN packets. I would not hold the merge for that, as we can always fix that later, but we don't resolve it before checking we need to open an issue.",
+          "createdAt": "2024-08-06T17:46:14Z",
+          "updatedAt": "2024-08-06T17:52:53Z",
+          "comments": [
+            {
+              "originalPosition": 273,
+              "body": "Have we not decided to state some kind of bucket size or enforcement period as well?",
+              "createdAt": "2024-08-06T17:46:14Z",
+              "updatedAt": "2024-08-06T17:52:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6Ed0s_",
+          "commit": {
+            "abbreviatedOid": "f6efaef"
+          },
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T23:59:57Z",
+          "updatedAt": "2024-08-06T23:59:57Z",
+          "comments": [
+            {
+              "originalPosition": 230,
+              "body": "Let's merge this PR and continue the discussion on #13.",
+              "createdAt": "2024-08-06T23:59:57Z",
+              "updatedAt": "2024-08-06T23:59:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6Ed0u7",
+          "commit": {
+            "abbreviatedOid": "279a6ed"
+          },
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-07T00:00:08Z",
+          "updatedAt": "2024-08-07T00:00:08Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "id": "PR_kwDOMaSf_M53iB3Q",
+      "title": "Add Kazuho as author.",
+      "url": "https://github.com/martinthomson/train-protocol/pull/12",
+      "state": "MERGED",
+      "author": "kazuho",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-08-06T07:22:10Z",
+      "updatedAt": "2024-08-06T09:19:34Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "704f8984eb13db8d31c6f077a917f5d59185c9c1",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "kazuho/coauthor-1",
+      "headRefOid": "df225850cb98e2657c5a8a019ddd060ae95add00",
+      "closedAt": "2024-08-06T09:19:31Z",
+      "mergedAt": "2024-08-06T09:19:31Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "c0d72582b31f4212190807cb4dc4ebb51b12117e"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6EXg8B",
+          "commit": {
+            "abbreviatedOid": "8f00606"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-06T09:17:54Z",
+          "updatedAt": "2024-08-06T09:17:54Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "```suggestion\r\n    fullname:\r\n      :: \u5965 \u4e00\u7a42\r\n      ascii: Kazuho Oku\r\n```",
+              "createdAt": "2024-08-06T09:17:54Z",
+              "updatedAt": "2024-08-06T09:18:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6EXhk8",
+          "commit": {
+            "abbreviatedOid": "df22585"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-06T09:18:54Z",
+          "updatedAt": "2024-08-06T09:18:54Z",
           "comments": []
         }
       ]
