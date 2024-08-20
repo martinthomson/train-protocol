@@ -124,16 +124,16 @@ Table of Contents
    maximum sustained throughput by modifying the TRAIN packet as it
    transits the network element.
 
-   +--------+    +---------+    +----------+
-   |  QUIC  |    | Network |    |   QUIC   |
-   | Sender |    | Element |    | Receiver |
-   +---+----+    +----+----+    +----+-----+
-       |              |              |
-       +--- TRAIN --->|    TRAIN     |
-       |    +QUIC     +--- +rate --->|
-       |              |    +QUIC     |  Validate QUIC packet
-       |              |              |  and Record rate
-       |              |              |
+   +--------+    +---------+     +----------+
+   |  QUIC  |    | Network |     |   QUIC   |
+   | Sender |    | Element |     | Receiver |
+   +---+----+    +----+----+     +----+-----+
+       |              |               |
+       +--- TRAIN --->|   TRAIN+rate  |
+       |    +QUIC     +---- +QUIC --->|
+       |              |               |  Validate QUIC packet
+       |              |               |  and record rate
+       |              |               |
 
    QUIC endpoints that receive modified TRAIN packets observe the
    indicated version, process the QUIC packet, and then record the
