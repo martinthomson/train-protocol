@@ -85,16 +85,16 @@ TRAIN packets.  The network element can indicate a maximum sustained throughput
 by modifying the TRAIN packet as it transits the network element.
 
 ~~~ aasvg
-+--------+    +---------+    +----------+
-|  QUIC  |    | Network |    |   QUIC   |
-| Sender |    | Element |    | Receiver |
-+---+----+    +----+----+    +----+-----+
-    |              |              |
-    +--- TRAIN --->|    TRAIN     |
-    |    +QUIC     +--- +rate --->|
-    |              |    +QUIC     |  Validate QUIC packet
-    |              |              |  and Record rate
-    |              |              |
++--------+    +---------+     +----------+
+|  QUIC  |    | Network |     |   QUIC   |
+| Sender |    | Element |     | Receiver |
++---+----+    +----+----+     +----+-----+
+    |              |               |
+    +--- TRAIN --->|   TRAIN+rate  |
+    |    +QUIC     +---- +QUIC --->|
+    |              |               |  Validate QUIC packet
+    |              |               |  and record rate
+    |              |               |
 ~~~
 
 QUIC endpoints that receive modified TRAIN packets observe the indicated
