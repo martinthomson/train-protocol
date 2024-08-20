@@ -196,7 +196,8 @@ TRAIN Packet {
   Version (32) = 0xTBD,
   Destination Connection ID Length (8),
   Destination Connection ID (0..2040),
-  Source Connection ID Length (8) = 0,
+  Source Connection ID Length (8),
+  Source Connection ID (0..2040),
 }
 ~~~
 {: #fig-train-packet title="TRAIN Packet Format"}
@@ -212,10 +213,10 @@ described in {{rate-signal}}.
 This packet includes a Destination Connection ID field that is set to the same
 value as other packets in the same datagram; see {{Section 12.2 of QUIC}}.
 
-The Source Connection ID Length field is set to zero, meaning that the Source
-Connection ID field is empty.  TRAIN packets can still be sent during the QUIC
-handshake; the Source Connection ID field in other packets might be needed to
-successfully complete a handshake.
+The Source Connection ID field is set to match the Source Connection ID field of
+any packet that follows.  If the next packet in the datagram does not have a
+Source Connection ID field, which is the case for packets with a short header
+({{Section 5.2 of INVARIANTS}}), the Source Connection ID field is empty.
 
 TRAIN packets SHOULD be included as the first packet in a datagram.  This is
 necessary in many cases for QUIC versions 1 and 2 because packets with a short
