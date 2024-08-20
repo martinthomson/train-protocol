@@ -1,11 +1,11 @@
-# Transparent Rate Adaptation Indicators for Network Elements (TRAIN)
+# Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
 
-This is the working area for the individual Internet-Draft, "Transparent Rate Adaptation Indicators for Network Elements (TRAIN)".
+This is the working area for the individual Internet-Draft, "Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol".
 
-* [Editor's Copy](https://martinthomson.github.io/train-protocol/#go.draft-tthomson-train-protocol.html)
-* [Datatracker Page](https://datatracker.ietf.org/doc/draft-tthomson-train-protocol)
-* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-tthomson-train-protocol)
-* [Compare Editor's Copy to Individual Draft](https://martinthomson.github.io/train-protocol/#go.draft-tthomson-train-protocol.diff)
+* [Editor's Copy](https://martinthomson.github.io/train-protocol/#go.draft-thomson-train-protocol.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-thomson-train-protocol)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-thomson-train-protocol)
+* [Compare Editor's Copy to Individual Draft](https://martinthomson.github.io/train-protocol/#go.draft-thomson-train-protocol.diff)
 
 
 ## Contributing
