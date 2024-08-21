@@ -264,8 +264,9 @@ be coalesced with other QUIC packets.
 
 A TRAIN packet is defined by the use of the longer header bit (0x80 in the first
 byte) and the TRAIN protocol version (0xTBD in the next four bytes).  A TRAIN
-packet MUST be discarded, along with any packets that come after it in the same
-datagram, if the Source Connection ID Length is non-zero.
+packet MAY be discarded, along with any packets that come after it in the same
+datagram, if the Source Connection ID is not consistent with those coalesced
+packets, as specified in {{packet}}.
 
 A TRAIN packet MUST be discarded if the Destination Connection ID does not match
 one recognized by the receiving endpoint.
