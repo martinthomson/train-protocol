@@ -5,10 +5,10 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 21 February 2025                           Private Octopus Inc.
+Expires: 22 February 2025                           Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                          20 August 2024
+                                                          21 August 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 February 2025.
+   This Internet-Draft will expire on 22 February 2025.
 
 Copyright Notice
 
@@ -330,8 +330,9 @@ Table of Contents
    by including the train_supported transport parameter (0xTBD).
 
    This transport parameter is valid for QUIC versions 1 [QUIC] and 2
-   [QUICv2] and any other version that recognizes the QUIC versions and
-   transport parameter registries; see Section 9.
+   [QUICv2] and any other version that recognizes the versions,
+   transport parameters, and frame types registries established in
+   Sections 22.2, 22.3, and 22.4 of [QUIC].
 
 7.  Deployment
 
