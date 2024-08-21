@@ -1609,15 +1609,14 @@ if is_long and is_train:
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-providing-opportunities-to-" class="section-name selfRef">Providing Opportunities to Apply Rate Limit Signals</a>
         </h3>
 <p id="section-7.2-1">Endpoints that wish to offer network elements the option to add rate limit
-markings can send TRAIN packets at any time.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
-<aside id="section-7.2-2">
-          <p id="section-7.2-2.1">TODO: Define a new frame type for requesting that a peer send a TRAIN packet.<a href="#section-7.2-2.1" class="pilcrow">¶</a></p>
-</aside>
-<p id="section-7.2-3">Endpoints <span class="bcp14">MUST</span> send any TRAIN packet they send as the first packet of a
+markings can send TRAIN packets at any time.  This is a decision that a sender
+makes when constructing datagrams, so TRAIN packets can be sent as frequently as
+the application requires.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-2">Endpoints <span class="bcp14">MUST</span> send any TRAIN packet they send as the first packet of a
 datagram, coalesced with additional packets.  An endpoint that receives and
 discards a TRAIN without also successfully processing another packets from the
 same datagram <span class="bcp14">SHOULD</span> ignore any rate limit signal.  Such a datagram might be
-entirely spoofed.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+entirely spoofed.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
