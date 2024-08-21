@@ -347,7 +347,7 @@ spurious rate limit signals.
 
 Some off path attackers may be able to
 observe traffic and inject packets. Attackers with such capabilities could
-observe 1RTT packets sent by an endpoint, create datagrams coalescing an
+observe packets sent by an endpoint, create datagrams coalescing an
 arbitrary TRAIN packet and the observed packet, send these datagrams and
 arrange for them to arrive at the peer endpoint before the observed
 packet, maybe routing the spoofed packets in such a way that they bypass
