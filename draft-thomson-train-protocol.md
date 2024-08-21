@@ -327,10 +327,9 @@ if is_long and is_train:
 ## Providing Opportunities to Apply Rate Limit Signals {#extra-packets}
 
 Endpoints that wish to offer network elements the option to add rate limit
-markings can send TRAIN packets at any time.
-
-{:aside}
-> TODO: Define a new frame type for requesting that a peer send a TRAIN packet.
+markings can send TRAIN packets at any time.  This is a decision that a sender
+makes when constructing datagrams, so TRAIN packets can be sent as frequently as
+the application requires.
 
 Endpoints MUST send any TRAIN packet they send as the first packet of a
 datagram, coalesced with additional packets.  An endpoint that receives and
