@@ -1191,6 +1191,9 @@ rate limit is.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
                 <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-providing-opportunities-to-" class="internal xref">Providing Opportunities to Apply Rate Limit Signals</a></p>
 </li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-feedback-to-sender-about-si" class="internal xref">Feedback To Sender About Signals</a></p>
+</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
@@ -1615,6 +1618,26 @@ datagram, coalesced with additional packets.  An endpoint that receives and
 discards a TRAIN without also successfully processing another packets from the
 same datagram <span class="bcp14">SHOULD</span> ignore any rate limit signal.  Such a datagram might be
 entirely spoofed.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="feedback">
+<section id="section-7.3">
+        <h3 id="name-feedback-to-sender-about-si">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-feedback-to-sender-about-si" class="section-name selfRef">Feedback To Sender About Signals</a>
+        </h3>
+<p id="section-7.3-1">Information about rate limits is intended for the sending application.  Any
+signal from network elements can be propagated to the receiving application
+using an implementation-defined mechanism.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-2">This document does not define a means for indicating what was received.
+Feedback can be implemented in a manner that best suits applications
+requirements.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
+<p id="section-7.3-3">A sender can use any acknowledgment mechanism provided by the QUIC version in
+use to learn whether datagrams containing TRAIN packets were received.  This
+might inform whether to send additional TRAIN packets in the event that a
+datagram is lost.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<p id="section-7.3-4">TRAIN packets could be stripped from datagrams in the network, which cannot be
+reliably detected.  This could result in a sender falsely believing that no
+network element applied a rate limit signal.<a href="#section-7.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
