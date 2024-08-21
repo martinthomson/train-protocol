@@ -5,10 +5,10 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 21 February 2025                           Private Octopus Inc.
+Expires: 22 February 2025                           Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                          20 August 2024
+                                                          21 August 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 February 2025.
+   This Internet-Draft will expire on 22 February 2025.
 
 Copyright Notice
 
@@ -319,9 +319,10 @@ Table of Contents
 
    A TRAIN packet is defined by the use of the longer header bit (0x80
    in the first byte) and the TRAIN protocol version (0xTBD in the next
-   four bytes).  A TRAIN packet MUST be discarded, along with any
-   packets that come after it in the same datagram, if the Source
-   Connection ID Length is non-zero.
+   four bytes).  A TRAIN packet MAY be discarded, along with any packets
+   that come after it in the same datagram, if the Source Connection ID
+   is not consistent with those coalesced packets, as specified in
+   Section 5.
 
    A TRAIN packet MUST be discarded if the Destination Connection ID
    does not match one recognized by the receiving endpoint.
