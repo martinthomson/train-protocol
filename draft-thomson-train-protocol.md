@@ -276,8 +276,9 @@ A QUIC endpoint indicates that it is willing to receive TRAIN packets by
 including the train_supported transport parameter (0xTBD).
 
 This transport parameter is valid for QUIC versions 1 {{QUIC}} and 2
-{{!QUICv2=RFC9369}} and any other version that recognizes the QUIC versions and
-transport parameter registries; see {{iana}}.
+{{!QUICv2=RFC9369}} and any other version that recognizes the versions,
+transport parameters, and frame types registries established in {{Sections 22.2,
+22.3, and 22.4 of QUIC}}.
 
 
 # Deployment
