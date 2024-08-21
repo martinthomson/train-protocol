@@ -398,12 +398,12 @@ Table of Contents
    Some off-path attackers may be able to both observe traffic and
    inject packets.  Attackers with such capabilities could observe
    packets sent by an endpoint, create datagrams coalescing an arbitrary
-   TRAIN packet and the observed packet, send these datagrams and
-   arrange for them to arrive at the peer endpoint before the observed
-   packet.  Spoofed packets that seek to advertise a higher limit than
-   might otherwise be permitted also need to bypass any rate limiters.
-   The attacker will thus get arbitrary TRAIN packets accepted by the
-   peer, with the result being that the endpoint receives a false or
+   TRAIN packet and the observed packet, and send these datagrams such
+   that they arrive at the peer endpoint before the original packet.
+   Spoofed packets that seek to advertise a higher limit than might
+   otherwise be permitted also need to bypass any rate limiters.  The
+   attacker will thus get arbitrary TRAIN packets accepted by the peer,
+   with the result being that the endpoint receives a false or
    misleading rate limit.
 
    The actual value of the rate limit signal is not authenticated.  Any
