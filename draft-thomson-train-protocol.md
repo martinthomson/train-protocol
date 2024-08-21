@@ -350,7 +350,8 @@ observe traffic and inject packets. Attackers with such capabilities could
 observe packets sent by an endpoint, create datagrams coalescing an
 arbitrary TRAIN packet and the observed packet, send these datagrams and
 arrange for them to arrive at the peer endpoint before the observed
-packet, maybe routing the spoofed packets in such a way that they bypass
+packet. Spoofed packets that seek to advertise a higher limit
+than might otherwise be permitted also need to bypass any
 the rate limiters. The attacker will thus get arbitrary TRAIN packets accepted by
 the peer, in an attempt to convince the endpoint that the rate limit is either
 much higher or much lower than the actual value.
