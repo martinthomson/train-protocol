@@ -345,7 +345,7 @@ in a position to drop datagrams and thereby enforce the indicated rate limit.
 contains a packet that it accepts to prevent an off-path attacker from inserting
 spurious rate limit signals.
 
-Some off path attackers may be able to
+Some off-path attackers may be able to both
 observe traffic and inject packets. Attackers with such capabilities could
 observe packets sent by an endpoint, create datagrams coalescing an
 arbitrary TRAIN packet and the observed packet, send these datagrams and
