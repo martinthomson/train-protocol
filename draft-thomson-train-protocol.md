@@ -336,6 +336,26 @@ same datagram SHOULD ignore any rate limit signal.  Such a datagram might be
 entirely spoofed.
 
 
+## Feedback To Sender About Signals {#feedback}
+
+Information about rate limits is intended for the sending application.  Any
+signal from network elements can be propagated to the receiving application
+using an implementation-defined mechanism.
+
+This document does not define a means for indicating what was received.
+Feedback can be implemented in a manner that best suits applications
+requirements.
+
+A sender can use any acknowledgment mechanism provided by the QUIC version in
+use to learn whether datagrams containing TRAIN packets were received.  This
+might inform whether to send additional TRAIN packets in the event that a
+datagram is lost.
+
+TRAIN packets could be stripped from datagrams in the network, which cannot be
+reliably detected.  This could result in a sender falsely believing that no
+network element applied a rate limit signal.
+
+
 # Security Considerations {#security}
 
 The modification of packets provides endpoints proof that a network element is
