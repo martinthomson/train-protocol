@@ -345,9 +345,15 @@ in a position to drop datagrams and thereby enforce the indicated rate limit.
 contains a packet that it accepts to prevent an off-path attacker from inserting
 spurious rate limit signals.
 
-{:aside}
-> TODO: Write up the off-path attack and acknowledge the limits of what can be
-> done to avoid it.
+Some off path attackers may be able to
+observe traffic and inject packets. Attackers with such capabilities could
+observe 1RTT packets sent by an endpoint, create datagrams coalescing an
+arbitrary TRAIN packet and the observed packet, send these datagrams and
+arrange for them to arrive at the peer endpoint before the observed
+packet, maybe routing the spoofed packets in such a way that they bypass
+the rate limiters. The attacker will thus get arbitrary TRAIN packets accepted by
+the peer, in an attempt to convince the endpoint that the rate limit is either
+much higher or much lower than the actual value.
 
 The actual value of the rate limit signal is not authenticated.  Any signal
 might be incorrectly set in order to encourage endpoints to behave in ways that
