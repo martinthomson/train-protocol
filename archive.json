@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-20T01:02:02.609110+00:00",
+  "timestamp": "2024-08-22T01:03:35.159925+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -86,15 +86,15 @@
       "id": "I_kwDOMaSf_M6Qn4ui",
       "title": "Transport parameter",
       "url": "https://github.com/martinthomson/train-protocol/issues/2",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "huitema",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "The mechanism provides a bandwidth limit to the receiving endpoint, by rewriting the version field of long header packets. It does require some cooperation of the endpoints:\r\n\r\n* be willing to receive packets with version set to one of the reserved values,\r\n* be willing to send long header packets after the handshake is complete,\r\n* if the bandwidth parameter describes a \"max send rate\", be willing to relay the value to the peer. (This would not be needed if the bandwidth parameter indicated \"max receive rate\".)\r\n\r\nI think we need to define a transport parameter to negotiate that.",
       "createdAt": "2024-07-24T00:59:12Z",
-      "updatedAt": "2024-07-28T03:47:39Z",
-      "closedAt": null,
+      "updatedAt": "2024-08-20T06:57:14Z",
+      "closedAt": "2024-08-20T06:57:14Z",
       "comments": [
         {
           "author": "martinthomson",
@@ -154,15 +154,15 @@
       "id": "I_kwDOMaSf_M6Qwyv0",
       "title": "Switch from \"rewriting\" to \"injecting\"",
       "url": "https://github.com/martinthomson/train-protocol/issues/5",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "kazuho",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Current design suggests middleboxes rewrite QUIC packets.\r\n\r\nThis approach has the following problem:\r\n* If middleboxes rewrite ordinary QUIC packets (e.g., V1) as the current draft suggests, it would have negative performance impact to existing stacks, as the rewrite would lead up to packet loss events.\r\n* We could define a trigger version, but that requires coordination on both endpoints. While that is possible, the concern is that the design might become dependent to the internals of specific version of QUIC (see #3). What we prefer is a design neutral to QUIC versions (or a design that works with UDP-based protocols other than QUIC).\r\n\r\nSo what about the following:\r\n* Instead of rewriting packets, let middleboxes *inject* long header QUIC packets. The QUIC version number field identifies that the packet carries bandwidth information. The bandwidth information itself can be encoded as part of the version number, or it can be the payload of the long header packet.\r\n* The receiver verifies if the injected packet is from a on-path device, by verifying the CID pair of the QUIC packet. This works because QUIC deployments use non-zero length CID in at least one direction.\r\n\r\nTo paraphrase, middleboxes that observe a long header QUIC packet can simply copy the Destination CID and Source CID fields of the QUIC packet, and inject a new QUIC packet using the same CID pair, with a special version number(s) indicating that the information is from the middlebox.\r\n\r\nAs said, the benefit of this approach is that it would work with any version of QUIC, and that there would be no negative impact to the throughput of existing QUIC stacks. Also, the protocol can be used by other UDP-based protocols, provided that they define a way for endpoints to agree on the value of CID fields used for validation.\r\n\r\nWDYT?",
       "createdAt": "2024-07-25T00:43:45Z",
-      "updatedAt": "2024-07-31T02:44:21Z",
-      "closedAt": null,
+      "updatedAt": "2024-08-21T04:36:37Z",
+      "closedAt": "2024-08-21T04:36:19Z",
       "comments": [
         {
           "author": "martinthomson",
@@ -184,6 +184,20 @@
           "body": "Rewriting helps if you consider it likely that there could be an attacker that can observe and inject packets on the path.  The conditions for success there aren't great, but it is an attack modality that is easier to block than document :)\r\n\r\nThe point about the Initial packet is well-taken.  Particularly if an off-path attacker is willing to accept a high risk of failure.  Though I would observe that there are limits to what an attacker might achieve in most of these adaptive bit rate scenarios.",
           "createdAt": "2024-07-31T02:44:19Z",
           "updatedAt": "2024-07-31T02:44:19Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "@kazuho with the new design, are you comfortable closing this issue?  I think that we're in pretty good shape overall.  We'll need to expand on the attack modalities stuff though.",
+          "createdAt": "2024-08-21T02:43:39Z",
+          "updatedAt": "2024-08-21T02:43:39Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Yes, let's close.",
+          "createdAt": "2024-08-21T04:36:36Z",
+          "updatedAt": "2024-08-21T04:36:36Z"
         }
       ]
     },
@@ -192,15 +206,15 @@
       "id": "I_kwDOMaSf_M6Q3kfa",
       "title": "shotgun thumpers",
       "url": "https://github.com/martinthomson/train-protocol/issues/6",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "huitema",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "I am a bit concerned that the simplistic way for intermediaries to implement the \"tumping\" is to write something like:\r\n~~~\r\n    if(*(uint32_t*)&packet[1] == TRAIN_VERSION) {\r\n        *(uint32_t*)&packet[1] = PACING_RATE_VERSION;\r\n    }\r\n~~~\r\nThis will work well 99.9999% of the time, but if will also catch the 1RTT packets in which the CID bytes happen to match the chosen version, or one of the reserved versions that match rates. There are two dozen such versions, so the probability is about 1/2^28. Not large, but it makes for a silly heisenbug. Pick one of the wrong CIDs and your packets get mangled in traffic.\r\n\r\nOf course, this does not happen if the test is written as:\r\n~~~\r\n    if((packet[0]&0xc0) == 0xc0 && *(uint32_t*)&packet[1] == TRAIN_VERSION) {\r\n        *(uint32_t*)&packet[1] = PACING_RATE_VERSION;\r\n    }\r\n~~~\r\n... but that means we have to fight laziness, because the wrong code is shorter and also \"almost right\".\r\n\r\nSo maybe we should be very explicit about that in the text.",
       "createdAt": "2024-07-25T16:26:32Z",
-      "updatedAt": "2024-08-07T16:58:52Z",
-      "closedAt": null,
+      "updatedAt": "2024-08-20T06:57:15Z",
+      "closedAt": "2024-08-20T06:57:15Z",
       "comments": [
         {
           "author": "huitema",
@@ -216,15 +230,15 @@
       "id": "I_kwDOMaSf_M6Q5qwa",
       "title": "the design should be QUIC-version neutral",
       "url": "https://github.com/martinthomson/train-protocol/issues/8",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "kazuho",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Current design requires changes to specification and the program being deployed to the middleboxes, each time a new QUIC version is deployed.\r\n\r\nTo paraphrase, we are introducing the incentive for middlebox vendors to block unknown versions of QUIC to which they cannot provide bandwidth information (or give preferential treatment to some versions of QUIC to which they can provide bandwidth).\r\n\r\nI think what we need to design is a bandwidth notification mechanism that is neutral to QUIC versions.\r\n\r\nOne way of achieving that goal would be to use the special version number solely for exchanging the bandwidth information (or for triggering rewrites). To give an example, and endpoints would exchange QUIC v1 packets as-is, but occasionally also send QUIC vXXXX packets which would be rewritten by the middleboxes.",
       "createdAt": "2024-07-25T21:52:24Z",
-      "updatedAt": "2024-07-25T22:25:25Z",
-      "closedAt": null,
+      "updatedAt": "2024-08-20T06:57:15Z",
+      "closedAt": "2024-08-20T06:57:15Z",
       "comments": [
         {
           "author": "huitema",
@@ -306,15 +320,15 @@
       "id": "I_kwDOMaSf_M6SI_yD",
       "title": "Source Connection ID value",
       "url": "https://github.com/martinthomson/train-protocol/issues/13",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinthomson",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "What do we set this to?  I've suggested that this be empty, but that might be inconsistent with other packets in the same datagram.\r\n\r\n",
       "createdAt": "2024-08-06T23:13:16Z",
-      "updatedAt": "2024-08-07T16:48:24Z",
-      "closedAt": null,
+      "updatedAt": "2024-08-21T07:51:24Z",
+      "closedAt": "2024-08-21T07:51:24Z",
       "comments": [
         {
           "author": "kazuho",
@@ -385,6 +399,37 @@
       "updatedAt": "2024-08-07T01:33:58Z",
       "closedAt": null,
       "comments": []
+    },
+    {
+      "number": 21,
+      "id": "I_kwDOMaSf_M6ToJJ9",
+      "title": "No need for request frame, but maybe echo frame",
+      "url": "https://github.com/martinthomson/train-protocol/issues/21",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Section 7.2 includes \"TODO: Define a new frame type for requesting that a peer send a TRAIN packet\", but I do not think that this is needed. TRAIN is asymmetric: the opportunities created by a TRAIN sender measure the rate limits applicable to that sender. The sender can chose to send as many TRAIN as necessary for the local rate management. \r\n\r\nOn the other hand, we may need to define an \"echo\" frame to send the measured values back to the peer.",
+      "createdAt": "2024-08-21T00:55:49Z",
+      "updatedAt": "2024-08-21T06:14:20Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "I agree about the sender side of this: a sender can decide how often it wants to make an opportunity to mark, if at all.",
+          "createdAt": "2024-08-21T02:26:19Z",
+          "updatedAt": "2024-08-21T02:26:19Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Let's leave this open as we debate the feedback part, or its absence.",
+          "createdAt": "2024-08-21T06:13:04Z",
+          "updatedAt": "2024-08-21T06:14:20Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -798,24 +843,26 @@
       "id": "PR_kwDOMaSf_M53g7GV",
       "title": "Rework design",
       "url": "https://github.com/martinthomson/train-protocol/pull/10",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "martinthomson",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "This changes the design to be a discrete packet.  The signal is carried in the low six bits of the first octet (which is easy to rewrite).\r\n\r\nPackets with this version and sent independent of the negotiated version.\r\n\r\nI took a few liberties, but there are still a lot of TODO items in here.",
       "createdAt": "2024-08-06T02:43:13Z",
-      "updatedAt": "2024-08-07T00:00:08Z",
+      "updatedAt": "2024-08-20T07:00:27Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "704f8984eb13db8d31c6f077a917f5d59185c9c1",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "signal-switch",
       "headRefOid": "279a6ed9bb865808b1821c3b766d66c1f472fa76",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-08-20T06:57:13Z",
+      "mergedAt": "2024-08-20T06:57:13Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "8c9b349520dce84fe71db5839532aa0bbb4cd678"
+      },
       "comments": [],
       "reviews": [
         {
@@ -1077,6 +1124,501 @@
           "body": "",
           "createdAt": "2024-08-06T09:18:54Z",
           "updatedAt": "2024-08-06T09:18:54Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "id": "PR_kwDOMaSf_M540Olt",
+      "title": "Allow SCID to match the next packet",
+      "url": "https://github.com/martinthomson/train-protocol/pull/16",
+      "state": "MERGED",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Closes #13.",
+      "createdAt": "2024-08-20T07:00:54Z",
+      "updatedAt": "2024-08-21T07:51:24Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "8c9b349520dce84fe71db5839532aa0bbb4cd678",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "scid-any",
+      "headRefOid": "59433aae82c249eb96ed04d644bdcc2d778a41fc",
+      "closedAt": "2024-08-21T07:51:23Z",
+      "mergedAt": "2024-08-21T07:51:23Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "eeedccecd9fb95167ac71f28e5d95b85c33b0fa0"
+      },
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Good catch.  Though I realize now, when writing this up, that this is not necessarily possible.\r\n\r\nLet's say that you process packets in order.  The order of events is something like this:\r\n\r\n1. You process the TRAIN packet.  It looks fine, but you can't validate the SCID yet.  You save the indicated rate for later.\r\n2. You process the v1 packet that follows.  It is fine and you handle it.\r\n3. You now go back to the indicated rate and apply it.\r\n\r\nAt what point do you recognize that the SCID in the TRAIN packet is bad?  You _could_, I guess, interrupt the processing of the v1 packet at the point that you read off the SCID and abort the entire thing.  That might be possible in our implementation, though it is a little bit weird because it requires acting on state that might not be saved otherwise.  But it's a bit intrusive and I can't see how that would be easy to do in a general fashion.\r\n\r\nI'm going to go with \"MAY\" for the requirement, because I can't see how this would be reliably implemented without a whole lot of back and forth.  The harm here is minimal, so if it isn't enforced, that's OK as long as the packet is well-formed.",
+          "createdAt": "2024-08-21T02:24:12Z",
+          "updatedAt": "2024-08-21T02:24:12Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6F_zwv",
+          "commit": {
+            "abbreviatedOid": "7e39cd4"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-20T13:59:36Z",
+          "updatedAt": "2024-08-20T13:59:36Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GEnQO",
+          "commit": {
+            "abbreviatedOid": "7e39cd4"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "We need to also update the text in section 5.2. Processing TRAIN Packets. Current text says \"A TRAIN packet MUST be discarded, along with any packets that come after it in the same datagram, if the Source Connection ID Length is non-zero.\"\r\n\r\nThe correct text ought to be something like:\r\n\r\n\"A TRAIN packet MUST be discarded, along with any packets that come after it in the same datagram, if the Source Connection ID is not consistent with the coalesced packets, as\r\nspecified in {{packet}}.\"",
+          "createdAt": "2024-08-21T01:05:17Z",
+          "updatedAt": "2024-08-21T01:05:17Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GFsSt",
+          "commit": {
+            "abbreviatedOid": "59433aa"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-21T04:01:04Z",
+          "updatedAt": "2024-08-21T04:01:04Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GFyNs",
+          "commit": {
+            "abbreviatedOid": "59433aa"
+          },
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-21T04:20:49Z",
+          "updatedAt": "2024-08-21T04:20:49Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "id": "PR_kwDOMaSf_M540QCM",
+      "title": "A protocol needs to support all three registries",
+      "url": "https://github.com/martinthomson/train-protocol/pull/17",
+      "state": "MERGED",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "If this protocol is to be used.",
+      "createdAt": "2024-08-20T07:05:05Z",
+      "updatedAt": "2024-08-21T02:56:23Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "8c9b349520dce84fe71db5839532aa0bbb4cd678",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "need-all-three",
+      "headRefOid": "5ba5bbe31e8d3be5735620bc028c2c13e376d591",
+      "closedAt": "2024-08-21T02:56:23Z",
+      "mergedAt": "2024-08-21T02:56:23Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "63d52317c857c3bff2760ba0f9e5b21c5fcfb759"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6F_0c_",
+          "commit": {
+            "abbreviatedOid": "5ba5bbe"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-20T14:00:36Z",
+          "updatedAt": "2024-08-20T14:00:36Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "id": "PR_kwDOMaSf_M540Rjf",
+      "title": "Fix aasvg glitch in diagram",
+      "url": "https://github.com/martinthomson/train-protocol/pull/18",
+      "state": "MERGED",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The two \"+\" placed one over the other caused aasvg to think that it needed to draw a line.",
+      "createdAt": "2024-08-20T07:09:12Z",
+      "updatedAt": "2024-08-20T08:10:18Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "8c9b349520dce84fe71db5839532aa0bbb4cd678",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "picture-cleanup",
+      "headRefOid": "b8ec427bc4114591b1e8cf284edce15da02e18f3",
+      "closedAt": "2024-08-20T07:38:25Z",
+      "mergedAt": "2024-08-20T07:38:25Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "083db779d0670fb6f0e781bd3c9783b294b81740"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 19,
+      "id": "PR_kwDOMaSf_M540qFf",
+      "title": "Add something important",
+      "url": "https://github.com/martinthomson/train-protocol/pull/19",
+      "state": "MERGED",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-08-20T08:09:37Z",
+      "updatedAt": "2024-08-20T14:01:56Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "083db779d0670fb6f0e781bd3c9783b294b81740",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "emoji-logo",
+      "headRefOid": "3037d2881ac942545928e42c120e054bb64e735d",
+      "closedAt": "2024-08-20T08:10:15Z",
+      "mergedAt": "2024-08-20T08:10:15Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "ba53331142ef39d50b0a23c7623b396fbc165381"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6F_1f7",
+          "commit": {
+            "abbreviatedOid": "3037d28"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "Important indeed.",
+          "createdAt": "2024-08-20T14:01:55Z",
+          "updatedAt": "2024-08-20T14:01:55Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 20,
+      "id": "PR_kwDOMaSf_M540rGF",
+      "title": "Automatic update of README.md",
+      "url": "https://github.com/martinthomson/train-protocol/pull/20",
+      "state": "MERGED",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-08-20T08:12:05Z",
+      "updatedAt": "2024-08-20T09:45:27Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "ba53331142ef39d50b0a23c7623b396fbc165381",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "update-readme",
+      "headRefOid": "5e763fd7159f1d7e2ec0fb48287863a16e62dc1f",
+      "closedAt": "2024-08-20T09:45:24Z",
+      "mergedAt": "2024-08-20T09:45:24Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "99f926b7592d3694cff1eae4a4a48db8688de166"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 22,
+      "id": "PR_kwDOMaSf_M547H5T",
+      "title": "NO need to request TRAIN",
+      "url": "https://github.com/martinthomson/train-protocol/pull/22",
+      "state": "MERGED",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "As @huitema notes in #21, the sender knows how often they need to send packets.\r\n\r\nI'll do a follow-up for acknowledgments/signals.",
+      "createdAt": "2024-08-21T02:29:31Z",
+      "updatedAt": "2024-08-21T07:51:36Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "99f926b7592d3694cff1eae4a4a48db8688de166",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "no-request",
+      "headRefOid": "51d1fb2520a27161f4f98c813338ce55034befac",
+      "closedAt": "2024-08-21T07:51:36Z",
+      "mergedAt": "2024-08-21T07:51:36Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "df2c3455a21c4e11ac310013ad6f273d58159a54"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6GFssK",
+          "commit": {
+            "abbreviatedOid": "51d1fb2"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-21T04:02:20Z",
+          "updatedAt": "2024-08-21T04:02:20Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GFyVU",
+          "commit": {
+            "abbreviatedOid": "51d1fb2"
+          },
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-21T04:21:13Z",
+          "updatedAt": "2024-08-21T04:21:13Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 23,
+      "id": "PR_kwDOMaSf_M547KvH",
+      "title": "Feedback options",
+      "url": "https://github.com/martinthomson/train-protocol/pull/23",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Expand on what is possible, but don't define anything.\r\n\r\nThis is my preferred outcome.\r\n\r\nCloses #21.",
+      "createdAt": "2024-08-21T02:42:15Z",
+      "updatedAt": "2024-08-22T00:53:00Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "99f926b7592d3694cff1eae4a4a48db8688de166",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "feedback",
+      "headRefOid": "0e68bd46cfb21d7ac78d5c5081befb9c280c2c48",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6GFuFm",
+          "commit": {
+            "abbreviatedOid": "0e68bd4"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "OK. I get that you do not want to define an end-to-end mechanism. Can you explain the downside of such a mechanism? How does the rationale to not do that differ from the reasons for including ECN reports in ACKs?",
+          "createdAt": "2024-08-21T04:07:06Z",
+          "updatedAt": "2024-08-21T04:09:47Z",
+          "comments": [
+            {
+              "originalPosition": 18,
+              "body": "I am not a great fan of that solution. It assumes that senders keep track of which packet was coalesced with what other packet, and that receiving one implies receiving the other. But that's not a guarantee. For example, it could happen that the TRAIN packet is corrupted, but the next packet in the datagram is received just fine.",
+              "createdAt": "2024-08-21T04:07:06Z",
+              "updatedAt": "2024-08-21T04:09:47Z"
+            },
+            {
+              "originalPosition": 22,
+              "body": "That, too.",
+              "createdAt": "2024-08-21T04:07:21Z",
+              "updatedAt": "2024-08-21T04:09:47Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GG9nQ",
+          "commit": {
+            "abbreviatedOid": "0e68bd4"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-21T07:27:37Z",
+          "updatedAt": "2024-08-21T07:27:37Z",
+          "comments": [
+            {
+              "originalPosition": 18,
+              "body": "A corrupted TRAIN packet is unlikely to be easy to discard.  Assuming that it is, then that is fine.  I think.  Having ACKs operate by adjacency is a trick that our stack uses as well.\r\n\r\nTo answer your question about end-to-end, my argument is very specifically about end-to-end.  If the message does not hit the application, then it is middle-to-middle.  ECN differs because it is a message for the congestion controller.  This message is for the rate adaptation mechanisms in the application, not the QUIC stack.\r\n\r\nI can see why you would want to close the loop at the QUIC layer.  It's certainly possible.  I'm not opposed to it, I just prefer not to start out by specifying it.\r\n\r\nThe main case that I think might inform this decision is are HLS, Dash, and analogous video streaming protocols.  In those cases, the rate adaptation occurs by requesting a different quality level (or a rung on a ladder).  This is done without modifying the application at all, because rate adaptation is receiver driven in those protocols.  Having a potentially conflicting signal at the QUIC layer isn't helpful in those cases.  Given that these are the primary driver for this design, that weakens the case for a QUIC signal.",
+              "createdAt": "2024-08-21T07:27:37Z",
+              "updatedAt": "2024-08-21T07:28:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GLkOE",
+          "commit": {
+            "abbreviatedOid": "0e68bd4"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-21T15:21:42Z",
+          "updatedAt": "2024-08-21T15:21:42Z",
+          "comments": [
+            {
+              "originalPosition": 18,
+              "body": "I see the case for \"application signal\". Perhaps we need to make it explicitly in the draft?",
+              "createdAt": "2024-08-21T15:21:42Z",
+              "updatedAt": "2024-08-21T15:21:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GQxuy",
+          "commit": {
+            "abbreviatedOid": "0e68bd4"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-22T00:52:56Z",
+          "updatedAt": "2024-08-22T00:53:00Z",
+          "comments": [
+            {
+              "originalPosition": 12,
+              "body": "I'm trying to distill the commentary about application-layer signals.  I wonder how much of that needs to be memorialized.\r\n\r\n```suggestion\r\nThis document does not define a means for indicating what was received.\r\nHow a receiving application communicates the rate limit signal to a\r\nsending application will depend on the application in use.\r\n\r\nDifferent applications can choose different approaches. For example,\r\nin an application where a receiver drives rate adaptation, it might\r\nnot be necessary to define additional signaling.\r\n```",
+              "createdAt": "2024-08-22T00:52:56Z",
+              "updatedAt": "2024-08-22T00:53:00Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 24,
+      "id": "PR_kwDOMaSf_M547un5",
+      "title": "Attempt to explain the off path attack",
+      "url": "https://github.com/martinthomson/train-protocol/pull/24",
+      "state": "MERGED",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This is a first shot at discussing the off path attack -- which can of course also be performed by on path attackers. It should address the discussion in issues #1 and #11.",
+      "createdAt": "2024-08-21T05:13:17Z",
+      "updatedAt": "2024-08-22T00:24:42Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "63d52317c857c3bff2760ba0f9e5b21c5fcfb759",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "spoof-attack",
+      "headRefOid": "e62e0fea85190e7941850eb435608b4b3dd0296b",
+      "closedAt": "2024-08-22T00:24:42Z",
+      "mergedAt": "2024-08-22T00:24:42Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "5820570df65c55073251dfa7d4227112d5f70b17"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6GHGl-",
+          "commit": {
+            "abbreviatedOid": "2ef082e"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "Some editorial suggestions, but this looks great.  We're not recommending anything in particular, which is fine.",
+          "createdAt": "2024-08-21T07:40:59Z",
+          "updatedAt": "2024-08-21T07:48:58Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "```suggestion\r\nobserve packets sent by an endpoint, create datagrams coalescing an\r\n```",
+              "createdAt": "2024-08-21T07:40:59Z",
+              "updatedAt": "2024-08-21T07:48:59Z"
+            },
+            {
+              "originalPosition": 12,
+              "body": "```suggestion\r\npacket. Spoofed packets that seek to advertise a higher limit\r\nthan might otherwise be permitted also need to bypass any\r\n```",
+              "createdAt": "2024-08-21T07:42:02Z",
+              "updatedAt": "2024-08-21T07:48:59Z"
+            },
+            {
+              "originalPosition": 13,
+              "body": "```suggestion\r\nrate limiters. The attacker will thus get arbitrary TRAIN packets accepted by\r\n```",
+              "createdAt": "2024-08-21T07:42:08Z",
+              "updatedAt": "2024-08-21T07:48:59Z"
+            },
+            {
+              "originalPosition": 15,
+              "body": "```suggestion\r\nthe peer, with the result being that the endpoint receives a false\r\nor misleading rate limit.\r\n```",
+              "createdAt": "2024-08-21T07:42:50Z",
+              "updatedAt": "2024-08-21T07:48:59Z"
+            },
+            {
+              "originalPosition": 7,
+              "body": "```suggestion\r\nSome off-path attackers may be able to both\r\n```",
+              "createdAt": "2024-08-21T07:43:28Z",
+              "updatedAt": "2024-08-21T07:48:59Z"
+            },
+            {
+              "originalPosition": 11,
+              "body": "```suggestion\r\narbitrary TRAIN packet and the observed packet, and send these datagrams\r\nsuch that they arrive at the peer endpoint before the original\r\n```",
+              "createdAt": "2024-08-21T07:44:13Z",
+              "updatedAt": "2024-08-21T07:48:59Z"
+            },
+            {
+              "originalPosition": 16,
+              "body": "The one thing that I'd suggest adding.\r\n\r\n```suggestion\r\n\r\nThe recipient of a rate limit signal therefore cannot guarantee that\r\nthe signal was generated by an on-path network element. However,\r\nthe capabilities required of an off-path attacker are substantially\r\nsimilar to those of on path elements.\r\n\r\n```",
+              "createdAt": "2024-08-21T07:47:33Z",
+              "updatedAt": "2024-08-21T07:48:59Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GOmoV",
+          "commit": {
+            "abbreviatedOid": "e62e0fe"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-08-21T21:28:44Z",
+          "updatedAt": "2024-08-21T21:28:44Z",
           "comments": []
         }
       ]
