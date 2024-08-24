@@ -5,10 +5,10 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 22 February 2025                           Private Octopus Inc.
+Expires: 25 February 2025                           Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                          21 August 2024
+                                                          24 August 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 February 2025.
+   This Internet-Draft will expire on 25 February 2025.
 
 Copyright Notice
 
@@ -394,8 +394,15 @@ Table of Contents
    the receiving application using an implementation-defined mechanism.
 
    This document does not define a means for indicating what was
-   received.  Feedback can be implemented in a manner that best suits
-   applications requirements.
+   received.  That is, the expectation is that any signal is propagated
+   to the application for handling, not handled automatically by the
+   transport layer.  How a receiving application communicates the rate
+   limit signal to a sending application will depend on the application
+   in use.
+
+   Different applications can choose different approaches.  For example,
+   in an application where a receiver drives rate adaptation, it might
+   not be necessary to define additional signaling.
 
    A sender can use any acknowledgment mechanism provided by the QUIC
    version in use to learn whether datagrams containing TRAIN packets
