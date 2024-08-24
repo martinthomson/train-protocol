@@ -343,8 +343,14 @@ signal from network elements can be propagated to the receiving application
 using an implementation-defined mechanism.
 
 This document does not define a means for indicating what was received.
-Feedback can be implemented in a manner that best suits applications
-requirements.
+That is, the expectation is that any signal is propagated to the application
+for handling, not handled automatically by the transport layer.
+How a receiving application communicates the rate limit signal to a
+sending application will depend on the application in use.
+
+Different applications can choose different approaches. For example,
+in an application where a receiver drives rate adaptation, it might
+not be necessary to define additional signaling.
 
 A sender can use any acknowledgment mechanism provided by the QUIC version in
 use to learn whether datagrams containing TRAIN packets were received.  This
