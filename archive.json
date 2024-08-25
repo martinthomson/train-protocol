@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-22T01:03:35.159925+00:00",
+  "timestamp": "2024-08-25T01:07:47.581782+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -1424,13 +1424,13 @@
       "labels": [],
       "body": "Expand on what is possible, but don't define anything.\r\n\r\nThis is my preferred outcome.\r\n\r\nCloses #21.",
       "createdAt": "2024-08-21T02:42:15Z",
-      "updatedAt": "2024-08-22T00:53:00Z",
+      "updatedAt": "2024-08-24T03:06:57Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "99f926b7592d3694cff1eae4a4a48db8688de166",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "feedback",
-      "headRefOid": "0e68bd46cfb21d7ac78d5c5081befb9c280c2c48",
+      "headRefOid": "81675736fcc15c1a36fc2561225bdb0e481581a2",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -1520,6 +1520,66 @@
               "body": "I'm trying to distill the commentary about application-layer signals.  I wonder how much of that needs to be memorialized.\r\n\r\n```suggestion\r\nThis document does not define a means for indicating what was received.\r\nHow a receiving application communicates the rate limit signal to a\r\nsending application will depend on the application in use.\r\n\r\nDifferent applications can choose different approaches. For example,\r\nin an application where a receiver drives rate adaptation, it might\r\nnot be necessary to define additional signaling.\r\n```",
               "createdAt": "2024-08-22T00:52:56Z",
               "updatedAt": "2024-08-22T00:53:00Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GUqnW",
+          "commit": {
+            "abbreviatedOid": "0e68bd4"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-22T06:00:57Z",
+          "updatedAt": "2024-08-22T06:00:57Z",
+          "comments": [
+            {
+              "originalPosition": 12,
+              "body": "I may be wrong, but I believe a lot of arguments against adding feedback in the transport is the \"slippery slope\". If we automate the transport level feedback, there will be a great temptation to use the advertised rate as part of transport control or congestion control. The slippery part is that if we do that, we create an incentive for network operators to manipulate the advertised rates in order to influence transports, moving away from a pure application mechanism.\r\n\r\nMaybe capture your comment \"my argument is very specifically about end-to-end\".",
+              "createdAt": "2024-08-22T06:00:57Z",
+              "updatedAt": "2024-08-22T06:01:32Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GVPVT",
+          "commit": {
+            "abbreviatedOid": "0e68bd4"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-22T07:31:18Z",
+          "updatedAt": "2024-08-22T07:31:18Z",
+          "comments": [
+            {
+              "originalPosition": 12,
+              "body": "How about:\r\n\r\n```suggestion\r\nThis document does not define a means for indicating what was received.\r\nThat is, the expectation is that any signal is propagated to the application\r\nfor handling, not handled automatically by the transport layer.\r\nHow a receiving application communicates the rate limit signal to a\r\nsending application will depend on the application in use.\r\n\r\nDifferent applications can choose different approaches. For example,\r\nin an application where a receiver drives rate adaptation, it might\r\nnot be necessary to define additional signaling.\r\n```",
+              "createdAt": "2024-08-22T07:31:18Z",
+              "updatedAt": "2024-08-22T07:31:18Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6GmvJ_",
+          "commit": {
+            "abbreviatedOid": "8167573"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "My last sticking point is, clarify whether the transmission and retransmission of TRAIN is decided by transport or by application.",
+          "createdAt": "2024-08-24T03:04:57Z",
+          "updatedAt": "2024-08-24T03:06:57Z",
+          "comments": [
+            {
+              "originalPosition": 18,
+              "body": "I agree that the \"ack of coalesced packet\" works in practice. I can swallow hard and live with that. But then, do we even need to mention it? Defining it sort of implies that the transport will issue a new TRAIN if the first one was not acked. But if the signal is truly end-to-end, the decision to send the TRAIN packet probably belongs to the application.",
+              "createdAt": "2024-08-24T03:04:57Z",
+              "updatedAt": "2024-08-24T03:06:58Z"
             }
           ]
         }
