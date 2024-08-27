@@ -353,9 +353,11 @@ in an application where a receiver drives rate adaptation, it might
 not be necessary to define additional signaling.
 
 A sender can use any acknowledgment mechanism provided by the QUIC version in
-use to learn whether datagrams containing TRAIN packets were received.  This
-might inform whether to send additional TRAIN packets in the event that a
-datagram is lost.
+use to learn whether datagrams containing TRAIN packets were likely received.
+This might help inform whether to send additional TRAIN packets in the event
+that a datagram is lost. However, rather than relying on transport signals, an
+application might be better able to indicate what has been received and
+processed.
 
 TRAIN packets could be stripped from datagrams in the network, which cannot be
 reliably detected.  This could result in a sender falsely believing that no
