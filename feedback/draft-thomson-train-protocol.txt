@@ -5,10 +5,10 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 25 February 2025                           Private Octopus Inc.
+Expires: 28 February 2025                           Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                          24 August 2024
+                                                          27 August 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 25 February 2025.
+   This Internet-Draft will expire on 28 February 2025.
 
 Copyright Notice
 
@@ -406,8 +406,11 @@ Table of Contents
 
    A sender can use any acknowledgment mechanism provided by the QUIC
    version in use to learn whether datagrams containing TRAIN packets
-   were received.  This might inform whether to send additional TRAIN
-   packets in the event that a datagram is lost.
+   were likely received.  This might help inform whether to send
+   additional TRAIN packets in the event that a datagram is lost.
+   However, rather than relying on transport signals, an application
+   might be better able to indicate what has been received and
+   processed.
 
    TRAIN packets could be stripped from datagrams in the network, which
    cannot be reliably detected.  This could result in a sender falsely
