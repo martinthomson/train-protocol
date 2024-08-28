@@ -373,13 +373,90 @@ Similarly, if there is a strong need to ensure that a rate limit is respected,
 network elements cannot assume that the signaled limit will be respected by
 endpoints.
 
-## Privacy {#privacy}
+
+# Privacy Analysis {#privacy}
 
 Any network element that can observe the content of that packet can read the
-rate limit that was applied.
+rate limit that was applied.  Any signal is visible on the path, from the point
+at which it is applied to the point at which it is consumed at an endpoint.
 
-{:aside}
-> TODO: Write more.
+The signals that this protocol carries are only capable of expressing a small
+number of discrete rate limits. However, revealing any information about rate
+limits could have privacy implications.  Different rate limits are often tied to
+different pricing schedules for access networks. Rate limit signals could
+therefore act as a low quality predictor for sensitive traits like socioeconomic
+status.
+
+The analysis that follows makes some simplifying assumptions:
+
+* Rate adaptation is assumed to be predominantly in the server-to-client
+  direction, for things like on-demand video.  However, there are significant
+  applications where data flows in the other direction, such as real-time
+  communications.
+
+* Access networks are assumed to be primary point at which rate limit signals
+  are applied.  The details of client access is assumed to be more sensitive
+  than that of a server.
+
+* This also assumes that information carried in rate limit signals are also
+  observable by endpoints through observation of network throughput, especially
+  when limits apply to the network through which an endpoint connects to the
+  Internet.
+
+This last point largely removes endpoints and endpoint applications from
+consideration with respect to privacy.  That limits are observable to endpoints
+somewhat mitigates concerns about indirectly revealing socioeconomic status.
+
+Under these assmptions, different considerations apply to clients and servers.
+
+## Client Privacy
+
+Signals about the downlink capacity that are applied by an access provider are
+only visible to clients and network elements in the access network.
+
+Where the scope of the rate limit is a single person, as can be the case for
+mobile subscriptions, downlink signals from an access network carries very
+little privacy risk.  The signal is only visible to access network nodes and the
+destination endpoint.  Though eavesdropping might reveal that information, an
+eavesdropper would also able to infer rate limits by other means.
+
+Downlink signals reveal information about the service, not specific clients, so
+a client could conclude that accepting signals is a reasonable privacy risk.
+
+Downlink rate limits for a shared service would be available any client on that
+network unless a firewall took specific steps to remove signals.  Such a
+firewall could not prevent the application of rate limit signals, which would be
+visible to network elements prior to the removal of the signal. Removing signals
+would also prevent endpoints from consuming the TRAIN signal.
+
+Uplink capacity from an access network is visible to the entire network path,
+plus any remote endpoint. For the predominant uses of network capacity, where
+downlink usage is most likely to be subject to rate adaptation, uplink rate
+limit signals might have reduced value. The need to send TRAIN packets on an
+uplink therefore needs to be balanced against any value that might be obtained.
+
+For applications where downlink capacity is most likely to be important, clients
+might choose to advertise support for this protocol, but avoid sending TRAIN
+packets. This limits the possibility that any rate limits associated with their
+access service are revealed to arbitrary servers.
+
+Even when an application requires rate adaptation in two directions -- such as
+real-time video conferencing -- the privacy risk associated with sending TRAIN
+packets needs to be weighed against the value of the information gained.
+
+## Server Privacy
+
+Conversely, a server might have fewer concerns about the privacy of its own
+service rate limits, in either direction. For a server uplink in particular (a
+client downlink), information that might inform rate adaptation is most likely
+to be useful.
+
+Servers that support applications with bidirectional exchange patterns that
+might benefit from understanding rate limits might consume rate limit signals
+when clients enable the feature. However, servers have to operate correctly even
+when clients act to protect the privacy of their service configuration.
+
+
 
 
 # IANA Considerations {#iana}
