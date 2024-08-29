@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-27T01:03:31.553048+00:00",
+  "timestamp": "2024-08-29T01:04:45.963334+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -405,15 +405,15 @@
       "id": "I_kwDOMaSf_M6ToJJ9",
       "title": "No need for request frame, but maybe echo frame",
       "url": "https://github.com/martinthomson/train-protocol/issues/21",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "huitema",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Section 7.2 includes \"TODO: Define a new frame type for requesting that a peer send a TRAIN packet\", but I do not think that this is needed. TRAIN is asymmetric: the opportunities created by a TRAIN sender measure the rate limits applicable to that sender. The sender can chose to send as many TRAIN as necessary for the local rate management. \r\n\r\nOn the other hand, we may need to define an \"echo\" frame to send the measured values back to the peer.",
       "createdAt": "2024-08-21T00:55:49Z",
-      "updatedAt": "2024-08-21T06:14:20Z",
-      "closedAt": null,
+      "updatedAt": "2024-08-27T14:01:39Z",
+      "closedAt": "2024-08-27T14:01:39Z",
       "comments": [
         {
           "author": "martinthomson",
@@ -428,6 +428,37 @@
           "body": "Let's leave this open as we debate the feedback part, or its absence.",
           "createdAt": "2024-08-21T06:13:04Z",
           "updatedAt": "2024-08-21T06:14:20Z"
+        }
+      ]
+    },
+    {
+      "number": 26,
+      "id": "I_kwDOMaSf_M6Uj0CG",
+      "title": "Privacy considerations",
+      "url": "https://github.com/martinthomson/train-protocol/issues/26",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "@martinthomson has prepared PR #25 to add a \"privacy analysis\", but I think the discussion of that matter would be better done in an issue than in a PR.",
+      "createdAt": "2024-08-28T15:24:48Z",
+      "updatedAt": "2024-08-29T00:34:53Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "My first step in the analysis would be to check on models of \"the system\". PR #25 considers a simple client-network-server model, but when it comes to real time communication we may want to also consider peer-network-peer (e.g., a web RTC call after doing ICE, etc.) and peer-network-relay-(relays)-relay-network-peer (the MoQ model). And of course the VPN model: client - VPN - network - server. We may also want to consider what happens in the emerging oblivious model: client to first relay (knows the client, does not know the activity), client to second relay through first relay (knows the activity, does not know the client)\r\n\r\nThen I would look at the privacy assets in these model. I think I can list (and maybe exclude) the following: identity of parties, activities in which they engage.\r\n\r\nAnd I would look at the avenue of attacks. I think that we are mostly concerned by passive observation of traffic, and I can think about a series of attacks on privacy:\r\n\r\n- Client identity. It is not a concern for TRAIN in the models in which the IP addresses are exposed, but what of the VPN or Oblivious model? Is the TRAIN activity somehow observable through a VPN? Can it be used to correlate clear text traffic with a source?\r\n- Client capability (and thus identity): Supposing that at least in a deployment phase TRAIN will be rare, TRAIN usage reveals that the client is part of the early deployment. That can be part of fingerprinting. \r\n- Client activity: using TRAIN may reveal that the endpoints are engaged in some form of realtime application. Is that more information than already available?\r\n- Client RTT, thus revealing usage of a VPN at cleint or server side -- the attack that is most concerning with the Spin bit. Can attackers measure the time between action (TRAIN packet) and reaction (traffic is reshaped to meet suggested bandwidth)?\r\n\r\nMaybe we can brainstorm some more and think of more of such attacks.\r\n\r\nAnd then, if we do find some of those attacks convincing, maybe we can start thinking of countermeasures. Maybe some form of greasing, e.g., sending TRAIN packets occasionally even if the application is not trying to shape video. Or, deliberately injecting wrong valued TRAIN packets end-to-end, with fake limits that are then ignored. Maybe doing that will require making the payload of train a bit more complex.",
+          "createdAt": "2024-08-28T15:49:19Z",
+          "updatedAt": "2024-08-28T15:49:19Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Hmm.  I had thought this easier originally, then the PR got long.  And I clearly missed a few things.\r\n\r\nAs for deployment scenarios, I know that there are many options here, but really the only one that seems likely to result in action is server-to-client flows.  That's where the bulk of the data flows.  That's why I started with that framing.  #25 does talk about other interaction models, but spending too much effort on those seems less useful.\r\n\r\nI don't see the identity thing as an issue.  Same for leaking capability.  There is a segregation effect here that might apply in that it creates a discriminator that might separate flows into groups.  Where a set of flows might have previously been homogeneous, markings will separate them out.  More so past the point that rate limit signals are applied, but that very much depends on the deployment scenarios.\r\n\r\nIf this goes ahead, then some client software will turn this on and it will be visible.  Hopefully, that is a popular stack. Hopefully that stack just turns this on always, not conditionally based on the application.  Then the privacy risk is negligible.  If all flows from all browsers had this enabled, there is no distinguishing value to the signal being present.  It will only be used by a limited number of services, but those services would be identifiable from IP, so no big deal there either.  That eliminates any concerns about whether this being on or off leaks information.\r\n\r\nMaybe that's the part that needs highlighting.  That this leaks information if it is exceptional, so don't make it exceptional.\r\n\r\nThe RTT thing seems like it isn't even worth mentioning.  There are much, much better passive RTT leaks in QUIC.  The reaction to a signal is not unambiguous.  It's also only really going to be effective if the flow is isolated, such that the congestion control response doesn't suppress it instead.  In that case, the congestion control response carries the signal anyway.\r\n\r\n\r\n\r\n",
+          "createdAt": "2024-08-29T00:34:52Z",
+          "updatedAt": "2024-08-29T00:34:52Z"
         }
       ]
     }
@@ -1417,24 +1448,26 @@
       "id": "PR_kwDOMaSf_M547KvH",
       "title": "Feedback options",
       "url": "https://github.com/martinthomson/train-protocol/pull/23",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "martinthomson",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Expand on what is possible, but don't define anything.\r\n\r\nThis is my preferred outcome.\r\n\r\nCloses #21.",
       "createdAt": "2024-08-21T02:42:15Z",
-      "updatedAt": "2024-08-24T03:06:57Z",
+      "updatedAt": "2024-08-27T20:59:39Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "99f926b7592d3694cff1eae4a4a48db8688de166",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "feedback",
-      "headRefOid": "81675736fcc15c1a36fc2561225bdb0e481581a2",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "14ef8ef21d148a93d7b0f43d0660f1242b081a99",
+      "closedAt": "2024-08-27T14:01:38Z",
+      "mergedAt": "2024-08-27T14:01:38Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "6611acf70ad9a880939d8d7927800816491c0646"
+      },
       "comments": [],
       "reviews": [
         {
@@ -1582,6 +1615,59 @@
               "updatedAt": "2024-08-24T03:06:58Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6G1R1v",
+          "commit": {
+            "abbreviatedOid": "0e68bd4"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-27T05:02:19Z",
+          "updatedAt": "2024-08-27T05:02:19Z",
+          "comments": [
+            {
+              "originalPosition": 18,
+              "body": "Ah, good point.  Maybe we should instead say:\r\n\r\n> This might help inform whether to send additional TRAIN packets in the event that a datagram is lost. However, rather than relying on transport signals, an application might be better able to indicate what has been received and processed.",
+              "createdAt": "2024-08-27T05:02:19Z",
+              "updatedAt": "2024-08-27T05:02:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6G1YVD",
+          "commit": {
+            "abbreviatedOid": "8167573"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-27T05:26:16Z",
+          "updatedAt": "2024-08-27T05:26:16Z",
+          "comments": [
+            {
+              "originalPosition": 18,
+              "body": "Yes, that would do it. Also, \"TRAIN packets could be stripped from datagrams in the network\"... which means the datagram would be acknowledged, and nobody would be any wiser.\r\n\r\n",
+              "createdAt": "2024-08-27T05:26:16Z",
+              "updatedAt": "2024-08-27T05:26:17Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6G1-9F",
+          "commit": {
+            "abbreviatedOid": "14ef8ef"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Nice way to make the case for application level feedback.",
+          "createdAt": "2024-08-27T06:43:59Z",
+          "updatedAt": "2024-08-27T06:43:59Z",
+          "comments": []
         }
       ]
     },
@@ -1679,6 +1765,46 @@
           "body": "",
           "createdAt": "2024-08-21T21:28:44Z",
           "updatedAt": "2024-08-21T21:28:44Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 25,
+      "id": "PR_kwDOMaSf_M55qJ2r",
+      "title": "Privacy analysis",
+      "url": "https://github.com/martinthomson/train-protocol/pull/25",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "This is a little fiddly, but I think that the general conclusion makes sense:\r\n\r\n* Clients advertise support, but rarely need to send TRAIN packets.\r\n* ...except for real-time or other bidirectional exchange patterns.\r\n* ...maybe.\r\n* Servers use opportunities that clients offer, but probably don't care much about uplink, except for real-time/bidirectional exchanges.\r\n\r\nPrivacy is important, so I'd like to get this in a reasonable shape before we ship a -00.  It's probably the last thing to do though.",
+      "createdAt": "2024-08-28T05:49:06Z",
+      "updatedAt": "2024-08-29T00:45:21Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "6611acf70ad9a880939d8d7927800816491c0646",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "privacy-expanded",
+      "headRefOid": "eab236bfc1cee89c9748389846f5b7570e7b9cf9",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6HFrhZ",
+          "commit": {
+            "abbreviatedOid": "d3e818f"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "In short, you are saying that clients don't care because the actual rate can be observed, and service don't care because their access is shared between multiple connections.\r\n\r\nI don't think that you can separate client/server so neatly. Suppose a video conference application. Both client and server are trying to send and receive data, both need to tune the coding rate of video images -- and if we move to telepresence both could use very large bandwidth.",
+          "createdAt": "2024-08-28T14:12:39Z",
+          "updatedAt": "2024-08-28T14:12:39Z",
           "comments": []
         }
       ]
