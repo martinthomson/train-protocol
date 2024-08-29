@@ -472,6 +472,10 @@ QUIC implementations are therefore encouraged to make the feature available
 unconditionally.  Endpoints might send TRAIN packets whenever a peer can accept
 them.
 
+False signals could create some uncertainty about the true rate
+limits. Endpoints could therefore send TRAIN packets with false rate limit
+signals, which can be filtered out of any feedback.
+
 Avoiding that being conditional ensures that those cases where the signals are
 actively used are harder to distinguish from other activity.  Endpoints that do
 act on a rate limit signal might still be detected. For an observer, any change
