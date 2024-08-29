@@ -458,17 +458,19 @@ when clients act to protect the privacy of their service configuration.
 
 ## Conditional Enablement
 
-As a signal that is passively observable means that its availability conveys
-information.  Making the availability of this capability conditional on client
-or server state leads to leaking information about that state.
+The presence or absence of TRAIN packets could carry information, even when
+networks do not apply rate limit signals.  Making a decision to accept or send
+TRAIN packets conditional on client or server state leads to leaking information
+about that state.
 
 Clients and servers can avoid leaking information through the availability of
 the feature by enabling the signaling unconditionally.  While certain actions
 might only be taken by applications that understand and can use rate limit
 signals, the presence of signals would not carry any significant information.
 
-QUIC implementations might therefore make the feature available unconditionally.
-Endpoints might send TRAIN packets whenever a peer can accept them.
+QUIC implementations are therefore encouraged to make the feature available
+unconditionally.  Endpoints might send TRAIN packets whenever a peer can accept
+them.
 
 Avoiding that being conditional ensures that those cases where the signals are
 actively used are harder to distinguish from other activity.  Endpoints that do
