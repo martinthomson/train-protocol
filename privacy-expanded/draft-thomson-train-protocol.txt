@@ -5,10 +5,10 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 1 March 2025                               Private Octopus Inc.
+Expires: 2 March 2025                               Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                          28 August 2024
+                                                          29 August 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 1 March 2025.
+   This Internet-Draft will expire on 2 March 2025.
 
 Copyright Notice
 
@@ -86,6 +86,7 @@ Table of Contents
    9.  Privacy Analysis
      9.1.  Client Privacy
      9.2.  Server Privacy
+     9.3.  Conditional Enablement
    10. IANA Considerations
      10.1.  TRAIN Version
      10.2.  train_supported Transport Parameter
@@ -518,6 +519,30 @@ Table of Contents
    consume rate limit signals when clients enable the feature.  However,
    servers have to operate correctly even when clients act to protect
    the privacy of their service configuration.
+
+9.3.  Conditional Enablement
+
+   As a signal that is passively observable means that its availability
+   conveys information.  Making the availability of this capability
+   conditional on client or server state leads to leaking information
+   about that state.
+
+   Clients and servers can avoid leaking information through the
+   availability of the feature by enabling the signaling
+   unconditionally.  While certain actions might only be taken by
+   applications that understand and can use rate limit signals, the
+   presence of signals would not carry any significant information.
+
+   QUIC implementations might therefore make the feature available
+   unconditionally.  Endpoints might send TRAIN packets whenever a peer
+   can accept them.
+
+   Avoiding that being conditional ensures that those cases where the
+   signals are actively used are harder to distinguish from other
+   activity.  Endpoints that do act on a rate limit signal might still
+   be detected.  For an observer, any change in send rate that results
+   might be attributable to changes in application state or a reaction
+   to congestion signals.
 
 10.  IANA Considerations
 
