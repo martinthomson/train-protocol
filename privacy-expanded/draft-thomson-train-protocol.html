@@ -1767,11 +1767,14 @@ signals, the presence of signals would not carry any significant information.<a 
 <p id="section-9.3-3">QUIC implementations are therefore encouraged to make the feature available
 unconditionally.  Endpoints might send TRAIN packets whenever a peer can accept
 them.<a href="#section-9.3-3" class="pilcrow">¶</a></p>
-<p id="section-9.3-4">Avoiding that being conditional ensures that those cases where the signals are
+<p id="section-9.3-4">False signals could create some uncertainty about the true rate
+limits. Endpoints could therefore send TRAIN packets with false rate limit
+signals, which can be filtered out of any feedback.<a href="#section-9.3-4" class="pilcrow">¶</a></p>
+<p id="section-9.3-5">Avoiding that being conditional ensures that those cases where the signals are
 actively used are harder to distinguish from other activity.  Endpoints that do
 act on a rate limit signal might still be detected. For an observer, any change
 in send rate that results might be attributable to changes in application state
-or a reaction to congestion signals.<a href="#section-9.3-4" class="pilcrow">¶</a></p>
+or a reaction to congestion signals.<a href="#section-9.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
