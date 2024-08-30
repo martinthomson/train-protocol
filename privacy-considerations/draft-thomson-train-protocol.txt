@@ -84,7 +84,7 @@ Table of Contents
      7.2.  Providing Opportunities to Apply Rate Limit Signals
      7.3.  Feedback To Sender About Signals
    8.  Security Considerations
-   9.  Privacy considerations
+   9.  Privacy Considerations
      9.1.  Passive observation of TRAIN for fingerprinting endpoints
      9.2.  Active manipulation of TRAIN to identify endpoint
    10. IANA Considerations
@@ -456,7 +456,7 @@ Table of Contents
    respected, network elements cannot assume that the signaled limit
    will be respected by endpoints.
 
-9.  Privacy considerations
+9.  Privacy Considerations
 
    In our privacy analysis, we studied whether TRAIN could be used by
    attackers to gain information about the ongoing traffic and
