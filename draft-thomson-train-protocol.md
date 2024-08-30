@@ -461,12 +461,29 @@ service to access the same server. The attacker sees the IP addresses
 in the packets behind VPN and proxy and also between the users and the VPN,
 but it does not know which VPN address corresponds to what user address.
 
-Suppose now that the attacker selects one of the IP addresses observed
-between VPN and server, and inserts TRAIN signals in that flow. The attacker
-can rewrite the TRAIN headers for specific to limit bandwidth
-to a lower than the "natural" bandwidth of the connection. If the
-attacker sees a subsequent drop of traffic between one of the user and
-the VPN, it can associate that user with the VPN address.
+Suppose now that the attacker selects a flow on the link between the
+VPN/proxy and server. The attacker applies rate limit signals to TRAIN packets
+in that flow. The attacker chooses a bandwidth that is
+lower than the "natural" bandwidth of the connection. A reduction
+in the rate of flows between client and VPN/proxy might allow
+the attacker to link the altered flow to the client.
+
+~~~ aasvg
++--------+
+| Client |------.
++--------+       \      +-------+
+                  '---->|       |            +--------+
++--------+              |  VPN  |<==========>|        |
+| Client |------------->|   /   |<==========>| Server |
++--------+              | Proxy |<==========>|        |
+                  .---->|       |     ^      +--------+
++--------+       /      +-------+     |
+| Client |======'                     |
++--------+      ^           Apply rate limit signal
+                 \
+                  \
+               Observe change
+~~~
 
 Opinions about the importance of this attack differ. And attacker that
 can manipulate TRAIN headers can also simulate congestion signals by
