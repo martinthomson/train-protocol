@@ -419,11 +419,14 @@ In the general case of a client connected to a server through the
 Internet, we believe that TRAIN does not provide much advantage to attackers.
 The identities of the clients and servers are already visible through their
 IP addresses. Traffic analysis tools already provide more information than
-the data rate limits set by TRAIN. However, we are concerned with two avenues
-of attacks: that the passive observation
-of TRAIN might help identify the end points; and that the active manipulation
-of TRAIN signals might help find out the identity of clients or servers
-located behind VPNs or proxies.
+the data rate limits set by TRAIN.
+
+There are two avenues of attack that require more analysis:
+
+* that the passive observation of TRAIN packets might help identify or
+  distinguish endpoints; and
+* that active manipulation of TRAIN signals might help reveal the
+  identity of endpoints that are otherwise hidden behind VPNs or proxies.
 
 ## Passive observation of TRAIN for fingerprinting endpoints
 
