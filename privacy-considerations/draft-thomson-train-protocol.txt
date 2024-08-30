@@ -85,7 +85,7 @@ Table of Contents
      7.3.  Feedback To Sender About Signals
    8.  Security Considerations
    9.  Privacy Considerations
-     9.1.  Passive observation of TRAIN for fingerprinting endpoints
+     9.1.  Passive Attacks
      9.2.  Active manipulation of TRAIN to identify endpoints
    10. IANA Considerations
      10.1.  TRAIN Version
@@ -486,7 +486,7 @@ Table of Contents
       identity of endpoints that are otherwise hidden behind VPNs or
       proxies.
 
-9.1.  Passive observation of TRAIN for fingerprinting endpoints
+9.1.  Passive Attacks
 
    If only few clients and server pairs negotiate the usage of TRAIN,
    the occasional observation of TRAIN packets will "stick out".  That
