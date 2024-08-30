@@ -454,7 +454,7 @@ QUIC implementations are therefore encouraged to make the feature available
 unconditionally.  Endpoints might send TRAIN packets whenever a peer can accept
 them.
 
-## Active manipulation of TRAIN to identify endpoint
+## Active manipulation of TRAIN to identify endpoints
 
 Suppose a configuration in which multiple clients use a VPN or Proxy
 service to access the same server. The attacker sees the IP addresses
