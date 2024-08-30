@@ -443,7 +443,7 @@ TRAIN packets reveals information about the state of the endpoint.
 If multiple servers are accessed through the same front facing server,
 Encrypted Client Hello (ECH) may be used to prevent outside parties to
 identify which specific server a client is using. However, if only
-a few of these servers use TRAIN, the observation of TRAIN packets
+a few of these servers use TRAIN, any TRAIN packets
 will help identify which specific server a client is using.
 
 This issue will be mitigated if TRAIN becomes widely implemented, and
