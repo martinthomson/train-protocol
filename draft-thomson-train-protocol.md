@@ -485,11 +485,10 @@ the attacker to link the altered flow to the client.
                Observe change
 ~~~
 
-Opinions about the importance of this attack differ. And attacker that
-can manipulate TRAIN headers can also simulate congestion signals by
-dropping packets or by setting the ECN CE bit, and that too will
-cause a subsequent drop of traffic between one of the user and
-the VPN.
+An attacker that can manipulate TRAIN headers can also simulate
+congestion signals by dropping packets or by setting the ECN CE bit.
+That will also likely result in changes in the congestion response by
+the affected client.
 
 Mitigating this attack probably requires VPNs to be conscious of TRAIN,
 and use defenses if appropriate. For example, a VPN could decide to blanch
