@@ -136,14 +136,24 @@ point on the network path than the network element that indicates a rate limit.
 Therefore, endpoints need to respect the send rate constraints that are set by a
 congestion controller.
 
-## On Path Signal
+## Unspecified Scope
 
 Modifying a packet does not prove that the rate limit that is indicated would be
-achievable.  A signal that is sent for a specific flow might be enforced at a
-different scope.  For instance, limits might apply at a network subscription
-level, such that multiple flows receive the same signal.  Nor does a signal
-prove that a higher rate would not be successful.  Endpoints that receive this
-signal therefore need to treat the information as advisory.
+achievable.  A signal that is sent for a specific flow is likely enforced at a
+different scope.  The extent of that scope is not carried in the signal.
+
+For instance, limits might apply at a network subscription level, such
+that multiple flows receive the same signal.
+
+Endpoints can therefore be more confident in the rate limit signal as an
+indication of the maximum achievable throughput than as any indication of
+expected throughput.  That throughput will only be achievable when there is no
+significant data flowing in the same scope.  In the presence of other flows,
+congestion limits are likely to determine actual throughput.
+
+This makes the application of signals most usefully applied to a downlink flow
+in access networks, close to an endpoint. In that case, capacity is less likely
+to be split between multiple active flows.
 
 ## Per-Flow Signal
 
@@ -156,12 +166,18 @@ involved.
 ## Undirectional Signal
 
 The endpoint that receives a rate limit signal is not the endpoint that might
-adapt its sending behavior as a result of receiving the signal.  An endpoint
-might need to communicate the value it receives to its peer in order to ensure
-that the limit is respected.  This document does not define how that signaling
-occurs as this is specific to the application in use.
+adapt its sending behavior as a result of receiving the signal.  This ensures
+that the rate limit signal is attached to the flow that it is mostly likely to
+apply to.
+
+An endpoint might need to communicate the value it receives to its peer in order
+to ensure that the limit is respected.  This document does not define how that
+signaling occurs as this is specific to the application in use.
 
 ## Advisory Signal
+
+A signal does not prove that a higher rate would not be successful.  Endpoints
+that receive this signal therefore need to treat the information as advisory.
 
 As an advisory signal, network elements cannot assume that endpoints will
 respect the signal.  Though this might reduce the need for more active rate
