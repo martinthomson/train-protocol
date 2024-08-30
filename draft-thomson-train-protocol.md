@@ -401,7 +401,7 @@ Similarly, if there is a strong need to ensure that a rate limit is respected,
 network elements cannot assume that the signaled limit will be respected by
 endpoints.
 
-# Privacy considerations {#privacy}
+# Privacy Considerations {#privacy}
 
 In our privacy analysis, we studied whether TRAIN could be used by attackers
 to gain information about the ongoing traffic and compromise the privacy
