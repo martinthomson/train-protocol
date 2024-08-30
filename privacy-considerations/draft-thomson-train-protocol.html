@@ -1758,21 +1758,89 @@ them.<a href="#section-9.1-5" class="pilcrow">¶</a></p>
 service to access the same server. The attacker sees the IP addresses
 in the packets behind VPN and proxy and also between the users and the VPN,
 but it does not know which VPN address corresponds to what user address.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
-<p id="section-9.2-2">Suppose now that the attacker selects one of the IP addresses observed
-between VPN and server, and inserts TRAIN signals in that flow. The attacker
-can rewrite the TRAIN headers for specific to limit bandwidth
-to a lower than the "natural" bandwidth of the connection. If the
-attacker sees a subsequent drop of traffic between one of the user and
-the VPN, it can associate that user with the VPN address.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
-<p id="section-9.2-3">Opinions about the importance of this attack differ. And attacker that
+<p id="section-9.2-2">Suppose now that the attacker selects a flow on the link between the
+VPN/proxy and server. The attacker applies rate limit signals to TRAIN packets
+in that flow. The attacker chooses a bandwidth that is
+lower than the "natural" bandwidth of the connection. A reduction
+in the rate of flows between client and VPN/proxy might allow
+the attacker to link the altered flow to the client.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+<div id="section-9.2-3">
+          <div class="alignLeft art-svg artwork" id="section-9.2-3.1">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="256" width="448" viewBox="0 0 448 256" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
+              <path d="M 8,32 L 8,64" fill="none" stroke="black"></path>
+              <path d="M 8,96 L 8,128" fill="none" stroke="black"></path>
+              <path d="M 8,160 L 8,192" fill="none" stroke="black"></path>
+              <path d="M 80,32 L 80,64" fill="none" stroke="black"></path>
+              <path d="M 80,96 L 80,128" fill="none" stroke="black"></path>
+              <path d="M 80,160 L 80,192" fill="none" stroke="black"></path>
+              <path d="M 200,64 L 200,160" fill="none" stroke="black"></path>
+              <path d="M 264,64 L 264,160" fill="none" stroke="black"></path>
+              <path d="M 312,144 L 312,176" fill="none" stroke="black"></path>
+              <path d="M 368,80 L 368,144" fill="none" stroke="black"></path>
+              <path d="M 440,80 L 440,144" fill="none" stroke="black"></path>
+              <path d="M 8,32 L 80,32" fill="none" stroke="black"></path>
+              <path d="M 88,48 L 136,48" fill="none" stroke="black"></path>
+              <path d="M 8,64 L 80,64" fill="none" stroke="black"></path>
+              <path d="M 200,64 L 264,64" fill="none" stroke="black"></path>
+              <path d="M 152,80 L 192,80" fill="none" stroke="black"></path>
+              <path d="M 368,80 L 440,80" fill="none" stroke="black"></path>
+              <path d="M 8,96 L 80,96" fill="none" stroke="black"></path>
+              <path d="M 272,94 L 360,94" fill="none" stroke="black"></path>
+              <path d="M 272,98 L 360,98" fill="none" stroke="black"></path>
+              <path d="M 88,112 L 192,112" fill="none" stroke="black"></path>
+              <path d="M 272,110 L 360,110" fill="none" stroke="black"></path>
+              <path d="M 272,114 L 360,114" fill="none" stroke="black"></path>
+              <path d="M 8,128 L 80,128" fill="none" stroke="black"></path>
+              <path d="M 272,126 L 360,126" fill="none" stroke="black"></path>
+              <path d="M 272,130 L 360,130" fill="none" stroke="black"></path>
+              <path d="M 152,144 L 192,144" fill="none" stroke="black"></path>
+              <path d="M 368,144 L 440,144" fill="none" stroke="black"></path>
+              <path d="M 8,160 L 80,160" fill="none" stroke="black"></path>
+              <path d="M 200,160 L 264,160" fill="none" stroke="black"></path>
+              <path d="M 88,174 L 136,174" fill="none" stroke="black"></path>
+              <path d="M 88,178 L 136,178" fill="none" stroke="black"></path>
+              <path d="M 8,192 L 80,192" fill="none" stroke="black"></path>
+              <path d="M 136,192 L 152,224" fill="none" stroke="black"></path>
+              <path d="M 136,48 L 152,80" fill="none" stroke="black"></path>
+              <path d="M 136,176 L 152,144" fill="none" stroke="black"></path>
+              <polygon class="arrowhead" points="368,128 356,122.4 356,133.6" fill="black" transform="rotate(0,360,128)"></polygon>
+              <polygon class="arrowhead" points="368,112 356,106.4 356,117.6" fill="black" transform="rotate(0,360,112)"></polygon>
+              <polygon class="arrowhead" points="368,96 356,90.4 356,101.6" fill="black" transform="rotate(0,360,96)"></polygon>
+              <polygon class="arrowhead" points="320,144 308,138.4 308,149.6" fill="black" transform="rotate(270,312,144)"></polygon>
+              <polygon class="arrowhead" points="280,128 268,122.4 268,133.6" fill="black" transform="rotate(180,272,128)"></polygon>
+              <polygon class="arrowhead" points="280,112 268,106.4 268,117.6" fill="black" transform="rotate(180,272,112)"></polygon>
+              <polygon class="arrowhead" points="280,96 268,90.4 268,101.6" fill="black" transform="rotate(180,272,96)"></polygon>
+              <polygon class="arrowhead" points="200,144 188,138.4 188,149.6" fill="black" transform="rotate(0,192,144)"></polygon>
+              <polygon class="arrowhead" points="200,112 188,106.4 188,117.6" fill="black" transform="rotate(0,192,112)"></polygon>
+              <polygon class="arrowhead" points="200,80 188,74.4 188,85.6" fill="black" transform="rotate(0,192,80)"></polygon>
+              <polygon class="arrowhead" points="144,192 132,186.4 132,197.6" fill="black" transform="rotate(243.43494882292202,136,192)"></polygon>
+              <g class="text">
+                <text x="44" y="52">Client</text>
+                <text x="232" y="100">VPN</text>
+                <text x="44" y="116">Client</text>
+                <text x="232" y="116">/</text>
+                <text x="404" y="116">Server</text>
+                <text x="232" y="132">Proxy</text>
+                <text x="44" y="180">Client</text>
+                <text x="248" y="196">Apply</text>
+                <text x="292" y="196">rate</text>
+                <text x="336" y="196">limit</text>
+                <text x="388" y="196">signal</text>
+                <text x="152" y="244">Observe</text>
+                <text x="212" y="244">change</text>
+              </g>
+            </svg><a href="#section-9.2-3.1" class="pilcrow">¶</a>
+</div>
+</div>
+<p id="section-9.2-4">Opinions about the importance of this attack differ. And attacker that
 can manipulate TRAIN headers can also simulate congestion signals by
 dropping packets or by setting the ECN CE bit, and that too will
 cause a subsequent drop of traffic between one of the user and
-the VPN.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
-<p id="section-9.2-4">Mitigating this attack probably requires VPNs to be conscious of TRAIN,
+the VPN.<a href="#section-9.2-4" class="pilcrow">¶</a></p>
+<p id="section-9.2-5">Mitigating this attack probably requires VPNs to be conscious of TRAIN,
 and use defenses if appropriate. For example, a VPN could decide to blanch
 the TRAIN signals, and a user could decide to not heed TRAIN signals
-if using a VPN.<a href="#section-9.2-4" class="pilcrow">¶</a></p>
+if using a VPN.<a href="#section-9.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
