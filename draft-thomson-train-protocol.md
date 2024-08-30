@@ -403,9 +403,11 @@ endpoints.
 
 # Privacy Considerations {#privacy}
 
-In our privacy analysis, we studied whether TRAIN could be used by attackers
-to gain information about the ongoing traffic and compromise the privacy
-of clients or servers by exposing their identity of their activity.
+The focus of this analysis is the extent to which observing TRAIN
+packets could be used to gain information about endpoints.
+This might be leaking details of how applications using QUIC
+operate or leaks of endpoint identity when using additional
+privacy protection, such as a VPN.
 
 Any network element that can observe the content of that packet can read the
 rate limit that was applied.  Any signal is visible on the path, from the point
