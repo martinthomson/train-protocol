@@ -1711,11 +1711,18 @@ reactions and gain further knowledge.<a href="#section-9-2" class="pilcrow">¶</
 Internet, we believe that TRAIN does not provide much advantage to attackers.
 The identities of the clients and servers are already visible through their
 IP addresses. Traffic analysis tools already provide more information than
-the data rate limits set by TRAIN. However, we are concerned with two avenues
-of attacks: that the passive observation
-of TRAIN might help identify the end points; and that the active manipulation
-of TRAIN signals might help find out the identity of clients or servers
-located behind VPNs or proxies.<a href="#section-9-3" class="pilcrow">¶</a></p>
+the data rate limits set by TRAIN.<a href="#section-9-3" class="pilcrow">¶</a></p>
+<p id="section-9-4">There are two avenues of attack that require more analysis:<a href="#section-9-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9-5.1">
+          <p id="section-9-5.1.1">that the passive observation of TRAIN packets might help identify or
+distinguish endpoints; and<a href="#section-9-5.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-5.2">
+          <p id="section-9-5.2.1">that active manipulation of TRAIN signals might help reveal the
+identity of endpoints that are otherwise hidden behind VPNs or proxies.<a href="#section-9-5.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
 <div id="passive-observation-of-train-for-fingerprinting-endpoints">
 <section id="section-9.1">
         <h3 id="name-passive-observation-of-trai">
