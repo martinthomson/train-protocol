@@ -1832,11 +1832,10 @@ the attacker to link the altered flow to the client.<a href="#section-9.2-2" cla
             </svg><a href="#section-9.2-3.1" class="pilcrow">¶</a>
 </div>
 </div>
-<p id="section-9.2-4">Opinions about the importance of this attack differ. And attacker that
-can manipulate TRAIN headers can also simulate congestion signals by
-dropping packets or by setting the ECN CE bit, and that too will
-cause a subsequent drop of traffic between one of the user and
-the VPN.<a href="#section-9.2-4" class="pilcrow">¶</a></p>
+<p id="section-9.2-4">An attacker that can manipulate TRAIN headers can also simulate
+congestion signals by dropping packets or by setting the ECN CE bit.
+That will also likely result in changes in the congestion response by
+the affected client.<a href="#section-9.2-4" class="pilcrow">¶</a></p>
 <p id="section-9.2-5">Mitigating this attack probably requires VPNs to be conscious of TRAIN,
 and use defenses if appropriate. For example, a VPN could decide to blanch
 the TRAIN signals, and a user could decide to not heed TRAIN signals
