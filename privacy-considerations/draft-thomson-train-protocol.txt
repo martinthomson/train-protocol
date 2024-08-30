@@ -86,7 +86,7 @@ Table of Contents
    8.  Security Considerations
    9.  Privacy Considerations
      9.1.  Passive Attacks
-     9.2.  Active manipulation of TRAIN to identify endpoints
+     9.2.  Active Attacks
    10. IANA Considerations
      10.1.  TRAIN Version
      10.2.  train_supported Transport Parameter
@@ -512,7 +512,7 @@ Table of Contents
    available unconditionally.  Endpoints might send TRAIN packets
    whenever a peer can accept them.
 
-9.2.  Active manipulation of TRAIN to identify endpoints
+9.2.  Active Attacks
 
    Suppose a configuration in which multiple clients use a VPN or proxy
    service to access the same server.  The attacker sees the IP
