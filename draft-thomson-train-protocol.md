@@ -401,14 +401,78 @@ Similarly, if there is a strong need to ensure that a rate limit is respected,
 network elements cannot assume that the signaled limit will be respected by
 endpoints.
 
-## Privacy {#privacy}
+# Privacy considerations {#privacy}
+
+In our privacy analysis, we studied whether TRAIN could be used by attackers
+to gain information about the ongoing traffic and compromise the privacy
+of clients or servers by exposing their identity of their activity.
 
 Any network element that can observe the content of that packet can read the
-rate limit that was applied.
+rate limit that was applied.  Any signal is visible on the path, from the point
+at which it is applied to the point at which it is consumed at an endpoint.
+On path elements can also alter the TRAIN signal to try trigger specific
+reactions and gain further knowledge.
 
-{:aside}
-> TODO: Write more.
+In the general case of a client connected to a server through the
+Internet, we believe that TRAIN does not provide much advantage to attackers.
+The identities of the clients and servers are already visible through their
+IP addresses. Traffic analysis tools already provide more information than
+the data rate limits set by TRAIN. However, we are concerned with two avenues
+of attacks: that the passive observation
+of TRAIN might help identify the end points; and that the active manipulation
+of TRAIN signals might help find out the identity of clients or servers
+located behind VPNs or proxies.
 
+## Passive observation of TRAIN for fingerprinting endpoints
+
+If only few clients and server pairs negotiate the usage of TRAIN, the
+occasional observation of TRAIN packets will "stick out". That observation,
+could be combined with observation of timing and volume of traffic to
+help identify the endpoint or categorize the application that they
+are using.
+
+A variation of this issue occurs if TRAIN is widely implemented, but
+only used in some specific circumstances. In that case, observation of
+TRAIN packets reveals information about the state of the endpoint.
+
+If multiple servers are accessed through the same front facing server,
+Encrypted Client Hello (ECH) may be used to prevent outside parties to
+identify which specific server a client is using. However, if only
+a few of these servers use TRAIN, the observation of TRAIN packets
+will help identify which specific server a client is using.
+
+This issue will be mitigated if TRAIN becomes widely implemented, and
+if the usage of TRAIN is not limited to the type of applications
+that make active use of the signal.
+
+QUIC implementations are therefore encouraged to make the feature available
+unconditionally.  Endpoints might send TRAIN packets whenever a peer can accept
+them.
+
+## Active manipulation of TRAIN to identify endpoint
+
+Suppose a configuration in which multiple clients use a VPN or Proxy
+service to access the same server. The attacker sees the IP addresses
+in the packets behind VPN and proxy and also between the users and the VPN,
+but it does not know which VPN address corresponds to what user address.
+
+Suppose now that the attacker selects one of the IP addresses observed
+between VPN and server, and inserts TRAIN signals in that flow. The attacker
+can rewrite the TRAIN headers for specific to limit bandwidth
+to a lower than the "natural" bandwidth of the connection. If the
+attacker sees a subsequent drop of traffic between one of the user and
+the VPN, it can associate that user with the VPN address.
+
+Opinions about the importance of this attack differ. And attacker that
+can manipulate TRAIN headers can also simulate congestion signals by
+dropping packets or by setting the ECN CE bit, and that too will
+cause a subsequent drop of traffic between one of the user and
+the VPN.
+
+Mitigating this attack probably requires VPNs to be conscious of TRAIN,
+and use defenses if appropriate. For example, a VPN could decide to blanch
+the TRAIN signals, and a user could decide to not heed TRAIN signals
+if using a VPN.
 
 # IANA Considerations {#iana}
 
