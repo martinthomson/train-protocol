@@ -456,7 +456,7 @@ them.
 
 ## Active manipulation of TRAIN to identify endpoints
 
-Suppose a configuration in which multiple clients use a VPN or Proxy
+Suppose a configuration in which multiple clients use a VPN or proxy
 service to access the same server. The attacker sees the IP addresses
 in the packets behind VPN and proxy and also between the users and the VPN,
 but it does not know which VPN address corresponds to what user address.
