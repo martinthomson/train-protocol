@@ -490,10 +490,10 @@ congestion signals by dropping packets or by setting the ECN CE bit.
 That will also likely result in changes in the congestion response by
 the affected client.
 
-Mitigating this attack probably requires VPNs to be conscious of TRAIN,
-and use defenses if appropriate. For example, a VPN could decide to blanch
-the TRAIN signals, and a user could decide to not heed TRAIN signals
-if using a VPN.
+A VPN or proxy could defend against this style of attack by removing TRAIN (and
+ECN) signals. There are few reasons to provide per-flow rate limit signals in
+that situation.  Endpoints might also either disable this feature or ignore any
+signals when they are aware of the use of a VPN or proxy.
 
 # IANA Considerations {#iana}
 
