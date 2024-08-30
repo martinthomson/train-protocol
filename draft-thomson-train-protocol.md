@@ -428,7 +428,7 @@ There are two avenues of attack that require more analysis:
 * that active manipulation of TRAIN signals might help reveal the
   identity of endpoints that are otherwise hidden behind VPNs or proxies.
 
-## Passive observation of TRAIN for fingerprinting endpoints
+## Passive Attacks
 
 If only few clients and server pairs negotiate the usage of TRAIN, the
 occasional observation of TRAIN packets will "stick out". That observation,
