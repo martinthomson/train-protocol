@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-08-29T01:04:45.963334+00:00",
+  "timestamp": "2024-09-01T01:15:14.725880+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -443,7 +443,7 @@
       "labels": [],
       "body": "@martinthomson has prepared PR #25 to add a \"privacy analysis\", but I think the discussion of that matter would be better done in an issue than in a PR.",
       "createdAt": "2024-08-28T15:24:48Z",
-      "updatedAt": "2024-08-29T00:34:53Z",
+      "updatedAt": "2024-08-30T01:37:40Z",
       "closedAt": null,
       "comments": [
         {
@@ -459,6 +459,83 @@
           "body": "Hmm.  I had thought this easier originally, then the PR got long.  And I clearly missed a few things.\r\n\r\nAs for deployment scenarios, I know that there are many options here, but really the only one that seems likely to result in action is server-to-client flows.  That's where the bulk of the data flows.  That's why I started with that framing.  #25 does talk about other interaction models, but spending too much effort on those seems less useful.\r\n\r\nI don't see the identity thing as an issue.  Same for leaking capability.  There is a segregation effect here that might apply in that it creates a discriminator that might separate flows into groups.  Where a set of flows might have previously been homogeneous, markings will separate them out.  More so past the point that rate limit signals are applied, but that very much depends on the deployment scenarios.\r\n\r\nIf this goes ahead, then some client software will turn this on and it will be visible.  Hopefully, that is a popular stack. Hopefully that stack just turns this on always, not conditionally based on the application.  Then the privacy risk is negligible.  If all flows from all browsers had this enabled, there is no distinguishing value to the signal being present.  It will only be used by a limited number of services, but those services would be identifiable from IP, so no big deal there either.  That eliminates any concerns about whether this being on or off leaks information.\r\n\r\nMaybe that's the part that needs highlighting.  That this leaks information if it is exceptional, so don't make it exceptional.\r\n\r\nThe RTT thing seems like it isn't even worth mentioning.  There are much, much better passive RTT leaks in QUIC.  The reaction to a signal is not unambiguous.  It's also only really going to be effective if the flow is isolated, such that the congestion control response doesn't suppress it instead.  In that case, the congestion control response carries the signal anyway.\r\n\r\n\r\n\r\n",
           "createdAt": "2024-08-29T00:34:52Z",
           "updatedAt": "2024-08-29T00:34:52Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I agree that \"sticking out\" is the first concern, and that we should encourage stacks to turn it on.\r\n\r\nI think there is also some value in scrambling the signal, i.e., originating occasional TRAIN packets in which the VN is set to \"10 Mbps\" or \"20 Mbps\" instead of just TRAIN. Both for detecting possible misbehaving middle boxes, and for scrambling the signals that can be snooped.\r\n\r\nI disagree that \"bits are coming from the server\". In the videoconference use case, bits are coming from the client as well.\r\n\r\nI think we should think a little more about \"client -- VPN -- network -- server\". Assume an attacker that sees the traffic in and out of the VPN. Does TRAIN >VPN provide information to tie the VPN -- server traffic to a specific client -- VPN flow?",
+          "createdAt": "2024-08-29T03:24:30Z",
+          "updatedAt": "2024-08-29T03:24:30Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "I've added a paragraph about adding some chaff.  That won't be 100% effective (any rate limit that is applied will establish a ceiling).\r\n\r\nAs for videoconferencing, I'm not saying that we don't have something, but that it is not a dominant scenario and the privacy/utility trade-off is not ideal.  There is text on that point already, but it doesn't make a simple recommendation.\r\n\r\nBefore we talk about VPNs, do you think that this only makes sense for single-subscriber connections to access networks?  That is, a major transit provider probably won't be doing this for the interconnect flows that move from one ISP to another.  \r\n\r\nSeparately, anything *inside* the VPN tunnel will be protected completely (I hope), so it is only the marking that is applied outside the tunnel that matters.  The real risk there, as already identified, is the upstream marking (client-to-server).",
+          "createdAt": "2024-08-29T04:01:09Z",
+          "updatedAt": "2024-08-29T04:01:09Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Oh, and \ud83e\udd26, me.  A local ISP won't be able to apply signals to VPN traffic, because the endpoint that receives them is the VPN host.  I doubt that the unprotected link (VPN -> server) will need or want to apply markings, but if they do it will be without information about the client.\r\n\r\nSo I think that VPNs aren't that big of a deal.  The only scenario that bothers me is maybe [draft-ietf-masque-quic-proxy](https://ietf-wg-masque.github.io/draft-ietf-masque-quic-proxy/draft-ietf-masque-quic-proxy.html), but even that looks good if encryption is used (which it should be).",
+          "createdAt": "2024-08-29T04:17:11Z",
+          "updatedAt": "2024-08-29T04:17:11Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I was concerned about a third party inserting fake TRAINs in the \"network\" section to check whether effects are noticeable in the \"vpn\" section. Suppose VPN serves clients A, B, C. Attacker sets a TRAIN mark on traffic on 5-tuple S-D-s-d-udp between the server and the VPN. A receives it, passes it to the server, and now traffic between VPN and A drops to 5 Mps. Attacker confirms by setting another mark at 10 Mbps, and observes a bit later traffic between VPN and A increase to 10 Mbps. Attacker concludes that outside address D matches A.",
+          "createdAt": "2024-08-29T04:27:54Z",
+          "updatedAt": "2024-08-29T04:27:54Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Oh, that's potentially scary, but isn't that possible with packet dropping as well?  The congestion response from the affected connection is fairly easy to trigger.",
+          "createdAt": "2024-08-29T04:31:22Z",
+          "updatedAt": "2024-08-29T04:31:22Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I guess there are multiple attack vectors. ECN bits could also be used that way. Should we recommend that VPN just wash out the signal? (And ECN bits, of course.) OTOH TRAIN is a much more powerful signal than ECN. With ECN, you will need to re-mark pretty much all packets.",
+          "createdAt": "2024-08-29T04:33:47Z",
+          "updatedAt": "2024-08-29T04:36:11Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Generally the pattern is \"sneak signal into encrypted VPN, correlate with encrypted changes in VPN.\" Of course, there is a converse issue. What if there is a TRAIN signal on the outer envelope of the VPN. Should it be copied to the packets exiting the VPN?",
+          "createdAt": "2024-08-29T04:37:13Z",
+          "updatedAt": "2024-08-29T04:37:13Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "The default, and safe, answer there is that the TRAIN signal is absorbed by the VPN.  I realize that there is some value in having that information available, but it might be better to look for the VPN to provide feedback to the client, rather than propagate it end-to-end in that case.",
+          "createdAt": "2024-08-29T04:40:56Z",
+          "updatedAt": "2024-08-29T04:40:56Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I think that I could make the privacy text shorter and simpler.\r\n\r\nWe may be concerned that the values advertised by TRAIN are leaking the network preferences for some servers or applications. This leaking out part is largely by design: networks that advertise a specific supported rate are revealing that they are configured to do so. The actual throughput can of course be measured by on path observers, so we can argue that advertising a TRAIN parameter does not provide any information that is not already observable. It may be more convenient for observers to capture a few TRAIN packets than to keep counters of all traffic seen, but not by much -- Cisco's NetFlow, for example, does this measurement already. Maybe say that in the introduction of the privacy section.\r\n\r\nAfter that there are just a few important issues, and we should stick to that:\r\n\r\n* sticking out\r\n* compromising metadata protected by VPN\r\n\r\n",
+          "createdAt": "2024-08-29T17:24:46Z",
+          "updatedAt": "2024-08-29T17:24:46Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Do you want to suggest something?",
+          "createdAt": "2024-08-29T23:41:41Z",
+          "updatedAt": "2024-08-29T23:41:41Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I took a first shot with PR #27",
+          "createdAt": "2024-08-30T01:37:38Z",
+          "updatedAt": "2024-08-30T01:37:38Z"
         }
       ]
     }
@@ -1774,25 +1851,33 @@
       "id": "PR_kwDOMaSf_M55qJ2r",
       "title": "Privacy analysis",
       "url": "https://github.com/martinthomson/train-protocol/pull/25",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinthomson",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "This is a little fiddly, but I think that the general conclusion makes sense:\r\n\r\n* Clients advertise support, but rarely need to send TRAIN packets.\r\n* ...except for real-time or other bidirectional exchange patterns.\r\n* ...maybe.\r\n* Servers use opportunities that clients offer, but probably don't care much about uplink, except for real-time/bidirectional exchanges.\r\n\r\nPrivacy is important, so I'd like to get this in a reasonable shape before we ship a -00.  It's probably the last thing to do though.",
       "createdAt": "2024-08-28T05:49:06Z",
-      "updatedAt": "2024-08-29T00:45:21Z",
+      "updatedAt": "2024-08-30T06:20:28Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "6611acf70ad9a880939d8d7927800816491c0646",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "privacy-expanded",
-      "headRefOid": "eab236bfc1cee89c9748389846f5b7570e7b9cf9",
-      "closedAt": null,
+      "headRefOid": "4b033052792bcef096a00450ffa519f5c35c0313",
+      "closedAt": "2024-08-30T06:20:27Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Closing in favour of #27.",
+          "createdAt": "2024-08-30T06:20:27Z",
+          "updatedAt": "2024-08-30T06:20:27Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOMaSf_M6HFrhZ",
@@ -1806,8 +1891,203 @@
           "createdAt": "2024-08-28T14:12:39Z",
           "updatedAt": "2024-08-28T14:12:39Z",
           "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6HKPup",
+          "commit": {
+            "abbreviatedOid": "eab236b"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "The unconditional part is useful. I am still concerned that the discussion of \"client privacy\" and \"server privacy\" is a bit optimistic.",
+          "createdAt": "2024-08-29T03:28:38Z",
+          "updatedAt": "2024-08-29T03:33:04Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "I have a hard time parsing the first sentence of that paragraph. Do you mean \"The TRAIN is passively observable, and conveys information.\"? Also, not sure about \"availabity. Do you mean \"If the signal is only sent during specific client states, that provide information about those states\" ?",
+              "createdAt": "2024-08-29T03:28:38Z",
+              "updatedAt": "2024-08-29T03:33:04Z"
+            }
+          ]
         }
       ]
+    },
+    {
+      "number": 27,
+      "id": "PR_kwDOMaSf_M5555Hb",
+      "title": "Alternative Privacy Consideration section",
+      "url": "https://github.com/martinthomson/train-protocol/pull/27",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "@martinthomson This is kind of an alternative view of the Privacy considerations. It is somewhat more compact than PR #25. ",
+      "createdAt": "2024-08-30T00:18:30Z",
+      "updatedAt": "2024-08-30T05:36:43Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "6611acf70ad9a880939d8d7927800816491c0646",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "privacy-considerations",
+      "headRefOid": "0ae8e5b38fc6a0583410a08d50e81d0c1e92d2a8",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@martinthomson Thanks for the suggestions! I was a bit short on time, knew I should do a figure but skipped on it... I will be travelling tomorrow and out for the Labor Day weekend, so feel free to merge this. Or wait for @kazuho approval...",
+          "createdAt": "2024-08-30T05:36:42Z",
+          "updatedAt": "2024-08-30T05:36:42Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6HWazG",
+          "commit": {
+            "abbreviatedOid": "6062cbd"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "Editorial suggestions only.  I like this better than mine.",
+          "createdAt": "2024-08-30T02:08:39Z",
+          "updatedAt": "2024-08-30T02:32:25Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "```suggestion\r\n# Privacy Considerations {#privacy}\r\n```",
+              "createdAt": "2024-08-30T02:08:39Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 14,
+              "body": "```suggestion\r\nThe focus of this analysis is the extent to which observing TRAIN\r\npackets could be used to gain information about endpoints.\r\nThis might be leaking details of how applications using QUIC\r\noperate or leaks of endpoint identity when using additional\r\nprivacy protection, such as a VPN.\r\n```",
+              "createdAt": "2024-08-30T02:12:04Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 30,
+              "body": "```suggestion\r\nthe data rate limits set by TRAIN.\r\n\r\nThere are two avenues of attack that require more analysis:\r\n\r\n* that the passive observation of TRAIN packets might help identify or\r\n  distinguish endpoints; and\r\n* that active manipulation of TRAIN signals might help reveal the\r\n  identity of endpoints that are otherwise hidden behind VPNs or proxies.\r\n```",
+              "createdAt": "2024-08-30T02:14:34Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 47,
+              "body": "```suggestion\r\na few of these servers use TRAIN, any TRAIN packets\r\n```",
+              "createdAt": "2024-08-30T02:15:53Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 58,
+              "body": "```suggestion\r\n## Active manipulation of TRAIN to identify endpoints\r\n```",
+              "createdAt": "2024-08-30T02:16:06Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 60,
+              "body": "```suggestion\r\nSuppose a configuration in which multiple clients use a VPN or proxy\r\n```",
+              "createdAt": "2024-08-30T02:16:18Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 70,
+              "body": "```suggestion\r\nSuppose now that the attacker selects a flow on the link between the\r\nVPN/proxy and server. The attacker applies rate limit signals to TRAIN packets\r\nin that flow. The attacker chooses a bandwidth that is\r\nlower than the \"natural\" bandwidth of the connection. A reduction\r\nin the rate of flows between client and VPN/proxy might allow\r\nthe attacker to link the altered flow to the client.\r\n\r\n~~~ aasvg\r\n+--------+\r\n| Client |------.\r\n+--------+       \\      +-------+\r\n                  '---->|       |            +--------+\r\n+--------+              |  VPN  |<==========>|        |\r\n| Client |------------->|   /   |<==========>| Server |\r\n+--------+              | Proxy |<==========>|        |\r\n                  .---->|       |     ^      +--------+\r\n+--------+       /      +-------+     |\r\n| Client |======'                     |\r\n+--------+      ^           Apply rate limit signal\r\n                 \\\r\n                  \\\r\n               Observe change\r\n~~~\r\n```",
+              "createdAt": "2024-08-30T02:27:04Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 76,
+              "body": "I don't think we should say anything about opinions.\r\n\r\n```suggestion\r\nAn attacker that can manipulate TRAIN headers can also simulate\r\ncongestion signals by dropping packets or by setting the ECN CE bit.\r\nThat will also likely result in changes in the congestion response by\r\nthe affected client.\r\n```",
+              "createdAt": "2024-08-30T02:28:35Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            },
+            {
+              "originalPosition": 81,
+              "body": "```suggestion\r\nA VPN or proxy could defend against this style of attack by removing TRAIN (and\r\nECN) signals. There are few reasons to provide per-flow rate limit signals in\r\nthat situation.  Endpoints might also either disable this feature or ignore any\r\nsignals when they are aware of the use of a VPN or proxy.\r\n```",
+              "createdAt": "2024-08-30T02:32:00Z",
+              "updatedAt": "2024-08-30T02:32:25Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6HWiXn",
+          "commit": {
+            "abbreviatedOid": "6062cbd"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "Oh, and some alternative (punchier) headings.",
+          "createdAt": "2024-08-30T02:33:01Z",
+          "updatedAt": "2024-08-30T02:33:54Z",
+          "comments": [
+            {
+              "originalPosition": 32,
+              "body": "```suggestion\r\n## Passive Attacks\r\n```",
+              "createdAt": "2024-08-30T02:33:01Z",
+              "updatedAt": "2024-08-30T02:33:54Z"
+            },
+            {
+              "originalPosition": 58,
+              "body": "```suggestion\r\n## Active Attacks\r\n```",
+              "createdAt": "2024-08-30T02:33:38Z",
+              "updatedAt": "2024-08-30T02:33:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6HX9x7",
+          "commit": {
+            "abbreviatedOid": "6062cbd"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-08-30T05:24:56Z",
+          "updatedAt": "2024-08-30T05:24:56Z",
+          "comments": [
+            {
+              "originalPosition": 58,
+              "body": "Github does not let me accept the suggestion. I will do it in a separate commit.",
+              "createdAt": "2024-08-30T05:24:56Z",
+              "updatedAt": "2024-08-30T05:24:56Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 28,
+      "id": "PR_kwDOMaSf_M558Je3",
+      "title": "Add some more words to the text on applicability",
+      "url": "https://github.com/martinthomson/train-protocol/pull/28",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The scoping section seemed a bit weak, so I spent some time on it.",
+      "createdAt": "2024-08-30T08:26:24Z",
+      "updatedAt": "2024-08-30T08:26:24Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "6611acf70ad9a880939d8d7927800816491c0646",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "uncertain-scope",
+      "headRefOid": "fa1b27e23cd64ac6fb22f41dee518dc0edc628ae",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
