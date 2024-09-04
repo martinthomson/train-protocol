@@ -5,10 +5,10 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 28 February 2025                           Private Octopus Inc.
+Expires: 8 March 2025                               Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                          27 August 2024
+                                                        4 September 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 28 February 2025.
+   This Internet-Draft will expire on 8 March 2025.
 
 Copyright Notice
 
@@ -70,7 +70,7 @@ Table of Contents
    2.  Overview
    3.  Applicability
      3.1.  Independent of Congestion Signals
-     3.2.  On Path Signal
+     3.2.  Unspecified Scope
      3.3.  Per-Flow Signal
      3.4.  Undirectional Signal
      3.5.  Advisory Signal
@@ -179,15 +179,27 @@ Table of Contents
    respect the send rate constraints that are set by a congestion
    controller.
 
-3.2.  On Path Signal
+3.2.  Unspecified Scope
 
    Modifying a packet does not prove that the rate limit that is
    indicated would be achievable.  A signal that is sent for a specific
-   flow might be enforced at a different scope.  For instance, limits
-   might apply at a network subscription level, such that multiple flows
-   receive the same signal.  Nor does a signal prove that a higher rate
-   would not be successful.  Endpoints that receive this signal
-   therefore need to treat the information as advisory.
+   flow is likely enforced at a different scope.  The extent of that
+   scope is not carried in the signal.
+
+   For instance, limits might apply at a network subscription level,
+   such that multiple flows receive the same signal.
+
+   Endpoints can therefore be more confident in the rate limit signal as
+   an indication of the maximum achievable throughput than as any
+   indication of expected throughput.  That throughput will only be
+   achievable when there is no significant data flowing in the same
+   scope.  In the presence of other flows, congestion limits are likely
+   to determine actual throughput.
+
+   This makes the application of signals most usefully applied to a
+   downlink flow in access networks, close to an endpoint.  In that
+   case, capacity is less likely to be split between multiple active
+   flows.
 
 3.3.  Per-Flow Signal
 
@@ -201,12 +213,19 @@ Table of Contents
 
    The endpoint that receives a rate limit signal is not the endpoint
    that might adapt its sending behavior as a result of receiving the
-   signal.  An endpoint might need to communicate the value it receives
-   to its peer in order to ensure that the limit is respected.  This
-   document does not define how that signaling occurs as this is
-   specific to the application in use.
+   signal.  This ensures that the rate limit signal is attached to the
+   flow that it is mostly likely to apply to.
+
+   An endpoint might need to communicate the value it receives to its
+   peer in order to ensure that the limit is respected.  This document
+   does not define how that signaling occurs as this is specific to the
+   application in use.
 
 3.5.  Advisory Signal
+
+   A signal does not prove that a higher rate would not be successful.
+   Endpoints that receive this signal therefore need to treat the
+   information as advisory.
 
    As an advisory signal, network elements cannot assume that endpoints
    will respect the signal.  Though this might reduce the need for more
