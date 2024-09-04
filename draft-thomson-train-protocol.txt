@@ -84,13 +84,15 @@ Table of Contents
      7.2.  Providing Opportunities to Apply Rate Limit Signals
      7.3.  Feedback To Sender About Signals
    8.  Security Considerations
-     8.1.  Privacy
-   9.  IANA Considerations
-     9.1.  TRAIN Version
-     9.2.  train_supported Transport Parameter
-   10. References
-     10.1.  Normative References
-     10.2.  Informative References
+   9.  Privacy Considerations
+     9.1.  Passive Attacks
+     9.2.  Active Attacks
+   10. IANA Considerations
+     10.1.  TRAIN Version
+     10.2.  train_supported Transport Parameter
+   11. References
+     11.1.  Normative References
+     11.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -473,19 +475,109 @@ Table of Contents
    respected, network elements cannot assume that the signaled limit
    will be respected by endpoints.
 
-8.1.  Privacy
+9.  Privacy Considerations
+
+   The focus of this analysis is the extent to which observing TRAIN
+   packets could be used to gain information about endpoints.  This
+   might be leaking details of how applications using QUIC operate or
+   leaks of endpoint identity when using additional privacy protection,
+   such as a VPN.
 
    Any network element that can observe the content of that packet can
-   read the rate limit that was applied.
+   read the rate limit that was applied.  Any signal is visible on the
+   path, from the point at which it is applied to the point at which it
+   is consumed at an endpoint.  On path elements can also alter the
+   TRAIN signal to try trigger specific reactions and gain further
+   knowledge.
 
-      |  TODO: Write more.
+   In the general case of a client connected to a server through the
+   Internet, we believe that TRAIN does not provide much advantage to
+   attackers.  The identities of the clients and servers are already
+   visible through their IP addresses.  Traffic analysis tools already
+   provide more information than the data rate limits set by TRAIN.
 
-9.  IANA Considerations
+   There are two avenues of attack that require more analysis:
 
-   This document registers a new QUIC version (Section 9.1 and a QUIC
-   transport parameter Section 9.2.
+   *  that the passive observation of TRAIN packets might help identify
+      or distinguish endpoints; and
 
-9.1.  TRAIN Version
+   *  that active manipulation of TRAIN signals might help reveal the
+      identity of endpoints that are otherwise hidden behind VPNs or
+      proxies.
+
+9.1.  Passive Attacks
+
+   If only few clients and server pairs negotiate the usage of TRAIN,
+   the occasional observation of TRAIN packets will "stick out".  That
+   observation, could be combined with observation of timing and volume
+   of traffic to help identify the endpoint or categorize the
+   application that they are using.
+
+   A variation of this issue occurs if TRAIN is widely implemented, but
+   only used in some specific circumstances.  In that case, observation
+   of TRAIN packets reveals information about the state of the endpoint.
+
+   If multiple servers are accessed through the same front facing
+   server, Encrypted Client Hello (ECH) may be used to prevent outside
+   parties to identify which specific server a client is using.
+   However, if only a few of these servers use TRAIN, any TRAIN packets
+   will help identify which specific server a client is using.
+
+   This issue will be mitigated if TRAIN becomes widely implemented, and
+   if the usage of TRAIN is not limited to the type of applications that
+   make active use of the signal.
+
+   QUIC implementations are therefore encouraged to make the feature
+   available unconditionally.  Endpoints might send TRAIN packets
+   whenever a peer can accept them.
+
+9.2.  Active Attacks
+
+   Suppose a configuration in which multiple clients use a VPN or proxy
+   service to access the same server.  The attacker sees the IP
+   addresses in the packets behind VPN and proxy and also between the
+   users and the VPN, but it does not know which VPN address corresponds
+   to what user address.
+
+   Suppose now that the attacker selects a flow on the link between the
+   VPN/proxy and server.  The attacker applies rate limit signals to
+   TRAIN packets in that flow.  The attacker chooses a bandwidth that is
+   lower than the "natural" bandwidth of the connection.  A reduction in
+   the rate of flows between client and VPN/proxy might allow the
+   attacker to link the altered flow to the client.
+
+   +--------+
+   | Client |------.
+   +--------+       \      +-------+
+                     '---->|       |            +--------+
+   +--------+              |  VPN  |<==========>|        |
+   | Client |------------->|   /   |<==========>| Server |
+   +--------+              | Proxy |<==========>|        |
+                     .---->|       |     ^      +--------+
+   +--------+       /      +-------+     |
+   | Client |======'                     |
+   +--------+      ^           Apply rate limit signal
+                    \
+                     \
+                  Observe change
+
+   An attacker that can manipulate TRAIN headers can also simulate
+   congestion signals by dropping packets or by setting the ECN CE bit.
+   That will also likely result in changes in the congestion response by
+   the affected client.
+
+   A VPN or proxy could defend against this style of attack by removing
+   TRAIN (and ECN) signals.  There are few reasons to provide per-flow
+   rate limit signals in that situation.  Endpoints might also either
+   disable this feature or ignore any signals when they are aware of the
+   use of a VPN or proxy.
+
+10.  IANA Considerations
+
+   This document registers a new QUIC version (Section 10.1 and a QUIC
+   transport parameter Section 10.2.
+
+10.1.  TRAIN Version
 
    This document registers the following entry to the "QUIC Versions"
    registry maintained at https://www.iana.org/assignments/quic
@@ -498,7 +590,7 @@ Table of Contents
    Contact:  QUIC Working Group (quic@ietf.org)
    Notes:  TRAIN Protocol
 
-9.2.  train_supported Transport Parameter
+10.2.  train_supported Transport Parameter
 
    This document registers the grease_quic_bit transport parameter in
    the "QUIC Transport Parameters" registry established in Section 22.3
@@ -513,9 +605,9 @@ Table of Contents
    Contact:  QUIC Working Group (quic@ietf.org)
    Notes:  (none)
 
-10.  References
+11.  References
 
-10.1.  Normative References
+11.1.  Normative References
 
    [BCP14]    Best Current Practice 14,
               <https://www.rfc-editor.org/info/bcp14>.
@@ -548,7 +640,7 @@ Table of Contents
               DOI 10.17487/RFC9369, May 2023,
               <https://www.rfc-editor.org/rfc/rfc9369>.
 
-10.2.  Informative References
+11.2.  Informative References
 
    [ECN]      Ramakrishnan, K., Floyd, S., and D. Black, "The Addition
               of Explicit Congestion Notification (ECN) to IP",
