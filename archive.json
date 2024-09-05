@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-09-03T01:04:23.369016+00:00",
+  "timestamp": "2024-09-05T01:05:11.754577+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -1919,24 +1919,26 @@
       "id": "PR_kwDOMaSf_M5555Hb",
       "title": "Alternative Privacy Consideration section",
       "url": "https://github.com/martinthomson/train-protocol/pull/27",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "huitema",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "@martinthomson This is kind of an alternative view of the Privacy considerations. It is somewhat more compact than PR #25. ",
       "createdAt": "2024-08-30T00:18:30Z",
-      "updatedAt": "2024-08-30T05:36:43Z",
+      "updatedAt": "2024-09-04T06:36:13Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "6611acf70ad9a880939d8d7927800816491c0646",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "privacy-considerations",
       "headRefOid": "0ae8e5b38fc6a0583410a08d50e81d0c1e92d2a8",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-09-04T06:36:02Z",
+      "mergedAt": "2024-09-04T06:36:02Z",
+      "mergedBy": "huitema",
+      "mergeCommit": {
+        "oid": "403aa244c1c9492013575cd180ebc0c1e2b5b28d"
+      },
       "comments": [
         {
           "author": "huitema",
@@ -2068,26 +2070,42 @@
       "id": "PR_kwDOMaSf_M558Je3",
       "title": "Add some more words to the text on applicability",
       "url": "https://github.com/martinthomson/train-protocol/pull/28",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "martinthomson",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "The scoping section seemed a bit weak, so I spent some time on it.",
       "createdAt": "2024-08-30T08:26:24Z",
-      "updatedAt": "2024-08-30T08:26:24Z",
+      "updatedAt": "2024-09-04T00:11:39Z",
       "baseRepository": "martinthomson/train-protocol",
       "baseRefName": "main",
       "baseRefOid": "6611acf70ad9a880939d8d7927800816491c0646",
       "headRepository": "martinthomson/train-protocol",
       "headRefName": "uncertain-scope",
       "headRefOid": "fa1b27e23cd64ac6fb22f41dee518dc0edc628ae",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-09-04T00:11:35Z",
+      "mergedAt": "2024-09-04T00:11:35Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "2a8638576867793486056ba8268ddd1c9a6fc43c"
+      },
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6HzPDk",
+          "commit": {
+            "abbreviatedOid": "fa1b27e"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "Looks fine. I did a bit of double take on the last paragraph (downlink), because we have the classic scenario  \"teenager plays a videogame and competes for bandwidth\", but yes even so \"capacity is less likely to be split between multiple active flows.\"",
+          "createdAt": "2024-09-03T19:53:36Z",
+          "updatedAt": "2024-09-03T19:53:36Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
