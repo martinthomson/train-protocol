@@ -513,8 +513,8 @@ signals when they are aware of the use of a VPN or proxy.
 
 # IANA Considerations {#iana}
 
-This document registers a new QUIC version ({{iana-version}} and a QUIC
-transport parameter {{iana-tp}}.
+This document registers a new QUIC version ({{iana-version}}) and a QUIC
+transport parameter ({{iana-tp}}).
 
 
 ## TRAIN Version {#iana-version}
