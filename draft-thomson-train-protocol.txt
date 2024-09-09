@@ -5,10 +5,10 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 8 March 2025                               Private Octopus Inc.
+Expires: 13 March 2025                              Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                        4 September 2024
+                                                        9 September 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 8 March 2025.
+   This Internet-Draft will expire on 13 March 2025.
 
 Copyright Notice
 
@@ -574,8 +574,8 @@ Table of Contents
 
 10.  IANA Considerations
 
-   This document registers a new QUIC version (Section 10.1 and a QUIC
-   transport parameter Section 10.2.
+   This document registers a new QUIC version (Section 10.1) and a QUIC
+   transport parameter (Section 10.2).
 
 10.1.  TRAIN Version
 
