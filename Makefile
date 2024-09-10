@@ -1,5 +1,4 @@
 LIBDIR := lib
-FAVICON_EMOJI := 🚂
 include $(LIBDIR)/main.mk
 
 $(LIBDIR)/main.mk:
