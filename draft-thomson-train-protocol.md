@@ -520,7 +520,8 @@ transport parameter ({{iana-tp}}).
 ## TRAIN Version {#iana-version}
 
 This document registers the following entry to the "QUIC Versions" registry
-maintained at <https://www.iana.org/assignments/quic>.
+maintained at <https://www.iana.org/assignments/quic>, following the guidance
+from {{Section 22.2 of QUIC}}.
 
 Value:
 : 0xTBD
@@ -544,9 +545,10 @@ Notes:
 
 ## train_supported Transport Parameter {#iana-tp}
 
-This document registers the grease_quic_bit transport parameter in the "QUIC
-Transport Parameters" registry established in {{Section 22.3 of QUIC}}. The
-following fields are registered:
+This document registers the train_supported transport parameter in the "QUIC
+Transport Parameters" registry maintained at
+<https://www.iana.org/assignments/quic>, following the guidance from {{Section
+22.3 of QUIC}}.
 
 Value:
 : 0xTBD
