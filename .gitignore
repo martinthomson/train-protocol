@@ -17,7 +17,7 @@
 /versioned/
 Gemfile.lock
 archive.json
-draft-tthomson-train-protocol.xml
+draft-thomson-train-protocol.xml
 package-lock.json
 report.xml
 !requirements.txt
