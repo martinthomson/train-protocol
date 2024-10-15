@@ -5,14 +5,14 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 22 February 2025                           Private Octopus Inc.
+Expires: 18 April 2025                              Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                                   Fastly
-                                                          21 August 2024
+                                                         15 October 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
-                  draft-thomson-train-protocol-latest
+               draft-thomson-scone-train-protocol-latest
 
 Abstract
 
@@ -28,7 +28,7 @@ About This Document
    The latest revision of this draft can be found at
    https://martinthomson.github.io/train-protocol/draft-thomson-train-
    protocol.html.  Status information for this document may be found at
-   https://datatracker.ietf.org/doc/draft-thomson-train-protocol/.
+   https://datatracker.ietf.org/doc/draft-thomson-scone-train-protocol/.
 
    Source for this draft and an issue tracker can be found at
    https://github.com/martinthomson/train-protocol.
@@ -48,7 +48,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 February 2025.
+   This Internet-Draft will expire on 18 April 2025.
 
 Copyright Notice
 
@@ -70,7 +70,7 @@ Table of Contents
    2.  Overview
    3.  Applicability
      3.1.  Independent of Congestion Signals
-     3.2.  On Path Signal
+     3.2.  Unspecified Scope
      3.3.  Per-Flow Signal
      3.4.  Undirectional Signal
      3.5.  Advisory Signal
@@ -84,13 +84,15 @@ Table of Contents
      7.2.  Providing Opportunities to Apply Rate Limit Signals
      7.3.  Feedback To Sender About Signals
    8.  Security Considerations
-     8.1.  Privacy
-   9.  IANA Considerations
-     9.1.  TRAIN Version
-     9.2.  train_supported Transport Parameter
-   10. References
-     10.1.  Normative References
-     10.2.  Informative References
+   9.  Privacy Considerations
+     9.1.  Passive Attacks
+     9.2.  Active Attacks
+   10. IANA Considerations
+     10.1.  TRAIN Version
+     10.2.  train_supported Transport Parameter
+   11. References
+     11.1.  Normative References
+     11.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -179,15 +181,27 @@ Table of Contents
    respect the send rate constraints that are set by a congestion
    controller.
 
-3.2.  On Path Signal
+3.2.  Unspecified Scope
 
    Modifying a packet does not prove that the rate limit that is
    indicated would be achievable.  A signal that is sent for a specific
-   flow might be enforced at a different scope.  For instance, limits
-   might apply at a network subscription level, such that multiple flows
-   receive the same signal.  Nor does a signal prove that a higher rate
-   would not be successful.  Endpoints that receive this signal
-   therefore need to treat the information as advisory.
+   flow is likely enforced at a different scope.  The extent of that
+   scope is not carried in the signal.
+
+   For instance, limits might apply at a network subscription level,
+   such that multiple flows receive the same signal.
+
+   Endpoints can therefore be more confident in the rate limit signal as
+   an indication of the maximum achievable throughput than as any
+   indication of expected throughput.  That throughput will only be
+   achievable when there is no significant data flowing in the same
+   scope.  In the presence of other flows, congestion limits are likely
+   to determine actual throughput.
+
+   This makes the application of signals most usefully applied to a
+   downlink flow in access networks, close to an endpoint.  In that
+   case, capacity is less likely to be split between multiple active
+   flows.
 
 3.3.  Per-Flow Signal
 
@@ -201,12 +215,19 @@ Table of Contents
 
    The endpoint that receives a rate limit signal is not the endpoint
    that might adapt its sending behavior as a result of receiving the
-   signal.  An endpoint might need to communicate the value it receives
-   to its peer in order to ensure that the limit is respected.  This
-   document does not define how that signaling occurs as this is
-   specific to the application in use.
+   signal.  This ensures that the rate limit signal is attached to the
+   flow that it is mostly likely to apply to.
+
+   An endpoint might need to communicate the value it receives to its
+   peer in order to ensure that the limit is respected.  This document
+   does not define how that signaling occurs as this is specific to the
+   application in use.
 
 3.5.  Advisory Signal
+
+   A signal does not prove that a higher rate would not be successful.
+   Endpoints that receive this signal therefore need to treat the
+   information as advisory.
 
    As an advisory signal, network elements cannot assume that endpoints
    will respect the signal.  Though this might reduce the need for more
@@ -244,7 +265,8 @@ Table of Contents
      Version (32) = 0xTBD,
      Destination Connection ID Length (8),
      Destination Connection ID (0..2040),
-     Source Connection ID Length (8) = 0,
+     Source Connection ID Length (8),
+     Source Connection ID (0..2040),
    }
 
                        Figure 1: TRAIN Packet Format
@@ -261,10 +283,11 @@ Table of Contents
    the same value as other packets in the same datagram; see
    Section 12.2 of [QUIC].
 
-   The Source Connection ID Length field is set to zero, meaning that
-   the Source Connection ID field is empty.  TRAIN packets can still be
-   sent during the QUIC handshake; the Source Connection ID field in
-   other packets might be needed to successfully complete a handshake.
+   The Source Connection ID field is set to match the Source Connection
+   ID field of any packet that follows.  If the next packet in the
+   datagram does not have a Source Connection ID field, which is the
+   case for packets with a short header (Section 5.2 of [INVARIANTS]),
+   the Source Connection ID field is empty.
 
    TRAIN packets SHOULD be included as the first packet in a datagram.
    This is necessary in many cases for QUIC versions 1 and 2 because
@@ -318,9 +341,10 @@ Table of Contents
 
    A TRAIN packet is defined by the use of the longer header bit (0x80
    in the first byte) and the TRAIN protocol version (0xTBD in the next
-   four bytes).  A TRAIN packet MUST be discarded, along with any
-   packets that come after it in the same datagram, if the Source
-   Connection ID Length is non-zero.
+   four bytes).  A TRAIN packet MAY be discarded, along with any packets
+   that come after it in the same datagram, if the Source Connection ID
+   is not consistent with those coalesced packets, as specified in
+   Section 5.
 
    A TRAIN packet MUST be discarded if the Destination Connection ID
    does not match one recognized by the receiving endpoint.
@@ -331,8 +355,9 @@ Table of Contents
    by including the train_supported transport parameter (0xTBD).
 
    This transport parameter is valid for QUIC versions 1 [QUIC] and 2
-   [QUICv2] and any other version that recognizes the QUIC versions and
-   transport parameter registries; see Section 9.
+   [QUICv2] and any other version that recognizes the versions,
+   transport parameters, and frame types registries established in
+   Sections 22.2, 22.3, and 22.4 of [QUIC].
 
 7.  Deployment
 
@@ -393,13 +418,23 @@ Table of Contents
    the receiving application using an implementation-defined mechanism.
 
    This document does not define a means for indicating what was
-   received.  Feedback can be implemented in a manner that best suits
-   applications requirements.
+   received.  That is, the expectation is that any signal is propagated
+   to the application for handling, not handled automatically by the
+   transport layer.  How a receiving application communicates the rate
+   limit signal to a sending application will depend on the application
+   in use.
+
+   Different applications can choose different approaches.  For example,
+   in an application where a receiver drives rate adaptation, it might
+   not be necessary to define additional signaling.
 
    A sender can use any acknowledgment mechanism provided by the QUIC
    version in use to learn whether datagrams containing TRAIN packets
-   were received.  This might inform whether to send additional TRAIN
-   packets in the event that a datagram is lost.
+   were likely received.  This might help inform whether to send
+   additional TRAIN packets in the event that a datagram is lost.
+   However, rather than relying on transport signals, an application
+   might be better able to indicate what has been received and
+   processed.
 
    TRAIN packets could be stripped from datagrams in the network, which
    cannot be reliably detected.  This could result in a sender falsely
@@ -413,8 +448,21 @@ Table of Contents
    signals if the datagram contains a packet that it accepts to prevent
    an off-path attacker from inserting spurious rate limit signals.
 
-      |  TODO: Write up the off-path attack and acknowledge the limits
-      |  of what can be done to avoid it.
+   Some off-path attackers may be able to both observe traffic and
+   inject packets.  Attackers with such capabilities could observe
+   packets sent by an endpoint, create datagrams coalescing an arbitrary
+   TRAIN packet and the observed packet, and send these datagrams such
+   that they arrive at the peer endpoint before the original packet.
+   Spoofed packets that seek to advertise a higher limit than might
+   otherwise be permitted also need to bypass any rate limiters.  The
+   attacker will thus get arbitrary TRAIN packets accepted by the peer,
+   with the result being that the endpoint receives a false or
+   misleading rate limit.
+
+   The recipient of a rate limit signal therefore cannot guarantee that
+   the signal was generated by an on-path network element.  However, the
+   capabilities required of an off-path attacker are substantially
+   similar to those of on path elements.
 
    The actual value of the rate limit signal is not authenticated.  Any
    signal might be incorrectly set in order to encourage endpoints to
@@ -427,23 +475,114 @@ Table of Contents
    respected, network elements cannot assume that the signaled limit
    will be respected by endpoints.
 
-8.1.  Privacy
+9.  Privacy Considerations
+
+   The focus of this analysis is the extent to which observing TRAIN
+   packets could be used to gain information about endpoints.  This
+   might be leaking details of how applications using QUIC operate or
+   leaks of endpoint identity when using additional privacy protection,
+   such as a VPN.
 
    Any network element that can observe the content of that packet can
-   read the rate limit that was applied.
+   read the rate limit that was applied.  Any signal is visible on the
+   path, from the point at which it is applied to the point at which it
+   is consumed at an endpoint.  On path elements can also alter the
+   TRAIN signal to try trigger specific reactions and gain further
+   knowledge.
 
-      |  TODO: Write more.
+   In the general case of a client connected to a server through the
+   Internet, we believe that TRAIN does not provide much advantage to
+   attackers.  The identities of the clients and servers are already
+   visible through their IP addresses.  Traffic analysis tools already
+   provide more information than the data rate limits set by TRAIN.
 
-9.  IANA Considerations
+   There are two avenues of attack that require more analysis:
 
-   This document registers a new QUIC version (Section 9.1 and a QUIC
-   transport parameter Section 9.2.
+   *  that the passive observation of TRAIN packets might help identify
+      or distinguish endpoints; and
 
-9.1.  TRAIN Version
+   *  that active manipulation of TRAIN signals might help reveal the
+      identity of endpoints that are otherwise hidden behind VPNs or
+      proxies.
+
+9.1.  Passive Attacks
+
+   If only few clients and server pairs negotiate the usage of TRAIN,
+   the occasional observation of TRAIN packets will "stick out".  That
+   observation, could be combined with observation of timing and volume
+   of traffic to help identify the endpoint or categorize the
+   application that they are using.
+
+   A variation of this issue occurs if TRAIN is widely implemented, but
+   only used in some specific circumstances.  In that case, observation
+   of TRAIN packets reveals information about the state of the endpoint.
+
+   If multiple servers are accessed through the same front facing
+   server, Encrypted Client Hello (ECH) may be used to prevent outside
+   parties to identify which specific server a client is using.
+   However, if only a few of these servers use TRAIN, any TRAIN packets
+   will help identify which specific server a client is using.
+
+   This issue will be mitigated if TRAIN becomes widely implemented, and
+   if the usage of TRAIN is not limited to the type of applications that
+   make active use of the signal.
+
+   QUIC implementations are therefore encouraged to make the feature
+   available unconditionally.  Endpoints might send TRAIN packets
+   whenever a peer can accept them.
+
+9.2.  Active Attacks
+
+   Suppose a configuration in which multiple clients use a VPN or proxy
+   service to access the same server.  The attacker sees the IP
+   addresses in the packets behind VPN and proxy and also between the
+   users and the VPN, but it does not know which VPN address corresponds
+   to what user address.
+
+   Suppose now that the attacker selects a flow on the link between the
+   VPN/proxy and server.  The attacker applies rate limit signals to
+   TRAIN packets in that flow.  The attacker chooses a bandwidth that is
+   lower than the "natural" bandwidth of the connection.  A reduction in
+   the rate of flows between client and VPN/proxy might allow the
+   attacker to link the altered flow to the client.
+
+   +--------+
+   | Client |------.
+   +--------+       \      +-------+
+                     '---->|       |            +--------+
+   +--------+              |  VPN  |<==========>|        |
+   | Client |------------->|   /   |<==========>| Server |
+   +--------+              | Proxy |<==========>|        |
+                     .---->|       |     ^      +--------+
+   +--------+       /      +-------+     |
+   | Client |======'                     |
+   +--------+      ^           Apply rate limit signal
+                    \
+                     \
+                  Observe change
+
+   An attacker that can manipulate TRAIN headers can also simulate
+   congestion signals by dropping packets or by setting the ECN CE bit.
+   That will also likely result in changes in the congestion response by
+   the affected client.
+
+   A VPN or proxy could defend against this style of attack by removing
+   TRAIN (and ECN) signals.  There are few reasons to provide per-flow
+   rate limit signals in that situation.  Endpoints might also either
+   disable this feature or ignore any signals when they are aware of the
+   use of a VPN or proxy.
+
+10.  IANA Considerations
+
+   This document registers a new QUIC version (Section 10.1) and a QUIC
+   transport parameter (Section 10.2).
+
+10.1.  TRAIN Version
 
    This document registers the following entry to the "QUIC Versions"
    registry maintained at https://www.iana.org/assignments/quic
-   (https://www.iana.org/assignments/quic).
+   (https://www.iana.org/assignments/quic), following the guidance from
+   Section 22.2 of [QUIC].
 
    Value:  0xTBD
    Status:  permanent
@@ -452,11 +591,13 @@ Table of Contents
    Contact:  QUIC Working Group (quic@ietf.org)
    Notes:  TRAIN Protocol
 
-9.2.  train_supported Transport Parameter
+10.2.  train_supported Transport Parameter
 
-   This document registers the grease_quic_bit transport parameter in
-   the "QUIC Transport Parameters" registry established in Section 22.3
-   of [QUIC].  The following fields are registered:
+   This document registers the train_supported transport parameter in
+   the "QUIC Transport Parameters" registry maintained at
+   https://www.iana.org/assignments/quic
+   (https://www.iana.org/assignments/quic), following the guidance from
+   Section 22.3 of [QUIC].
 
    Value:  0xTBD
    Parameter Name:  train_supported
@@ -467,9 +608,9 @@ Table of Contents
    Contact:  QUIC Working Group (quic@ietf.org)
    Notes:  (none)
 
-10.  References
+11.  References
 
-10.1.  Normative References
+11.1.  Normative References
 
    [BCP14]    Best Current Practice 14,
               <https://www.rfc-editor.org/info/bcp14>.
@@ -502,7 +643,7 @@ Table of Contents
               DOI 10.17487/RFC9369, May 2023,
               <https://www.rfc-editor.org/rfc/rfc9369>.
 
-10.2.  Informative References
+11.2.  Informative References
 
    [ECN]      Ramakrishnan, K., Floyd, S., and D. Black, "The Addition
               of Explicit Congestion Notification (ECN) to IP",
