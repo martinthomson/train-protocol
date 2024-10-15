@@ -3,7 +3,7 @@ title: "Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol"
 abbrev: "TRAIN Protocol"
 category: info
 
-docname: draft-thomson-train-protocol-latest
+docname: draft-thomson-scone-train-protocol-latest
 submissiontype: IETF
 number:
 date:
