@@ -37,6 +37,10 @@ author:
       ascii: Kazuho Oku
     org: Fastly
     email: kazuhooku@gmail.com
+ -
+    fullname: Jana Iyengar
+    org: Fastly
+    email: jri.ietf@gmail.com
 
 
 normative:
