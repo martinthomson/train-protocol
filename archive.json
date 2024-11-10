@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-11-07T01:08:37.404391+00:00",
+  "timestamp": "2024-11-10T01:12:43.355489+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -2145,6 +2145,74 @@
           "body": "Grease bit, uh? So much boiler plate, so much cut and paste...",
           "createdAt": "2024-09-09T16:42:51Z",
           "updatedAt": "2024-09-09T16:42:51Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 30,
+      "id": "PR_kwDOMaSf_M6BKyRj",
+      "title": "Add self",
+      "url": "https://github.com/martinthomson/train-protocol/pull/30",
+      "state": "MERGED",
+      "author": "janaiyengar",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-11-07T10:40:47Z",
+      "updatedAt": "2024-11-07T17:36:39Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "4756fbd4b546b9c035ce2b1092c348b5dda6f89e",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "jri/addself",
+      "headRefOid": "46c3927e829046128d7e9804c1000f806e9f0cad",
+      "closedAt": "2024-11-07T17:36:39Z",
+      "mergedAt": "2024-11-07T17:36:38Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "fb4722399e78b1f5e5d9552eeb434916fc695259"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOMaSf_M6QUIia",
+          "commit": {
+            "abbreviatedOid": "46c3927"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-11-07T14:46:47Z",
+          "updatedAt": "2024-11-07T14:46:47Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6QUK0m",
+          "commit": {
+            "abbreviatedOid": "46c3927"
+          },
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-11-07T14:50:08Z",
+          "updatedAt": "2024-11-07T14:50:08Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOMaSf_M6QUtLE",
+          "commit": {
+            "abbreviatedOid": "46c3927"
+          },
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-11-07T15:35:33Z",
+          "updatedAt": "2024-11-07T15:35:33Z",
           "comments": []
         }
       ]
