@@ -69,7 +69,7 @@ as the manner in which rate limits are enforced can be incompatible with the
 rate estimation or congestion control algorithms used at endpoints.
 
 Having the network indicate what its rate limiting policy is, in a way that is
-accessible to endpoints, might allow applications to use this inforation when
+accessible to endpoints, might allow applications to use this information when
 adapting their send rate.
 
 The Transparent Rate Adaptation Indications for Networks (TRAIN) protocol is
