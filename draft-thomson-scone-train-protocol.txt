@@ -5,11 +5,11 @@
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
 Intended status: Informational                                C. Huitema
-Expires: 11 May 2025                                Private Octopus Inc.
+Expires: 21 May 2025                                Private Octopus Inc.
                                                         奥 一穂 (K. Oku)
                                                               J. Iyengar
                                                                   Fastly
-                                                         7 November 2024
+                                                        17 November 2024
 
 
  Transparent Rate Adaptation Indications for Networks (TRAIN) Protocol
@@ -49,7 +49,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 11 May 2025.
+   This Internet-Draft will expire on 21 May 2025.
 
 Copyright Notice
 
@@ -108,7 +108,7 @@ Table of Contents
 
    Having the network indicate what its rate limiting policy is, in a
    way that is accessible to endpoints, might allow applications to use
-   this inforation when adapting their send rate.
+   this information when adapting their send rate.
 
    The Transparent Rate Adaptation Indications for Networks (TRAIN)
    protocol is negotiated by QUIC endpoints.  This protocol provides a
