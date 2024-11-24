@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-11-21T01:12:31.007189+00:00",
+  "timestamp": "2024-11-24T01:17:30.790043+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -2216,6 +2216,34 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 31,
+      "id": "PR_kwDOMaSf_M6Cy0Ap",
+      "title": "Add permissions to the jobs",
+      "url": "https://github.com/martinthomson/train-protocol/pull/31",
+      "state": "MERGED",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-11-22T10:10:56Z",
+      "updatedAt": "2024-11-22T10:11:13Z",
+      "baseRepository": "martinthomson/train-protocol",
+      "baseRefName": "main",
+      "baseRefOid": "171af6daed911ff03d4f086dd79153eb9b3280b1",
+      "headRepository": "martinthomson/train-protocol",
+      "headRefName": "permissions",
+      "headRefOid": "9a1fae1d67ef7ce4825784d6f607dd377d05b062",
+      "closedAt": "2024-11-22T10:11:02Z",
+      "mergedAt": "2024-11-22T10:11:02Z",
+      "mergedBy": "martinthomson",
+      "mergeCommit": {
+        "oid": "39277d27a222c3c080c46fbb5fd33bf9972f0a56"
+      },
+      "comments": [],
+      "reviews": []
     }
   ]
 }
