@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-12-12T01:15:37.038345+00:00",
+  "timestamp": "2024-12-15T01:21:04.447065+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -536,6 +536,44 @@
           "body": "I took a first shot with PR #27",
           "createdAt": "2024-08-30T01:37:38Z",
           "updatedAt": "2024-08-30T01:37:38Z"
+        }
+      ]
+    },
+    {
+      "number": 32,
+      "id": "I_kwDOMaSf_M6i_ADG",
+      "title": "Could network elements mangle innocent packets?",
+      "url": "https://github.com/martinthomson/train-protocol/issues/32",
+      "state": "OPEN",
+      "author": "martinduke",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Using the algorithm listed in 7.1, a network elements will alter bits 2 to 7 of a UDP datagram if:\r\n\r\n- Bit 0 is 1 (IIUC this eliminates all DTLS)\r\n- bytes 1 to 5 match the TRAIN version\r\n\r\nThis seems insufficient to guard against arbitrary UDP datagrams having their first byte sometimes mangled. If the packet is authenticated, it's \"just\" packet loss. If not, the protocol or application data can be corrupted. If the two conditions are consistently met for a UDP flow (e.g. bytes 1 to 5 are part of an identifier of some kind), SCONE will break the flow. \r\n\r\n(Presumably, network elements update the UDP checksum.)\r\n\r\nA purist might say this is always unacceptable, and there is not really a way to guarantee that a datagram is QUIC without decrypting the whole thing.\r\n\r\nNot being a purist, I think we should do everything we can to reduce this possibility.\r\n\r\nSome possible mitigations:\r\n- always require the QUIC bit to be set.\r\n- the element parses the full TRAIN long header format, verifying that both connection IDs fit in the datagram.\r\n- the element parses the invariants of the second coalesced packet, and verifies any CIDs there match. IMO this makes false positives extremely unlikely, though server packets may have a zero-length CID.\r\n- Make sure the TRAIN version number does not match any likely byte patterns (e.g. ASCII or Unicode, well-known formats for protocols over UDP, etc). It would also make sense for future TSVART reviews to explicitly check for collisions with TRAIN.\r\n\r\nA discussion of these concerns in the draft would also be appropriate.\r\n",
+      "createdAt": "2024-12-12T01:16:55Z",
+      "updatedAt": "2024-12-12T07:35:44Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Good points, particularly about flows that consistently match the pattern.\r\n\r\nI don't like the QUIC bit one (see [RFC 9287](https://datatracker.ietf.org/doc/rfc9287/)).\r\n\r\nI do like the connection ID consistency check.  That's probably entirely feasible without stepping outside of the invariants.  The chance that you have a repeated connection ID is low.\r\n\r\nHowever, packets with a short header (which will be the most useful ones to tweak) won't gain much advantage against accidental matches because there isn't much more that matches.  You get a DCID and SCID of a single zero byte each in the TRAIN packet and a short header that has a single bit that can be checked.\r\n\r\nWe can certainly try to avoid picking a version number that overlaps with known protocols.  I don't know what that looks like, but we can probably work something out.\r\n\r\nI would also recommend that some amount of traffic analysis is likely advisable, as much as that feels a bit gross to be recommending.  The flow should be highly likely to be QUIC before applying this trick.  Looking for port 443 might be sufficient, for instance.  Having traffic come from server IP/port pairs that are known to support QUIC (which can be tested by attempting connections) is another option.",
+          "createdAt": "2024-12-12T02:34:38Z",
+          "updatedAt": "2024-12-12T02:34:38Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "NONE",
+          "body": "You could say that TRAIN endpoints SHOULD or MUST choose a connection ID of at least N bytes or the maximum allowed by the version, whichever is less.\r\n\r\nIt depends how concerned the WG is about this.",
+          "createdAt": "2024-12-12T03:47:30Z",
+          "updatedAt": "2024-12-12T03:47:30Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "That SHOULD would need to be a MUST so that intermediaries could ensure that they only alter flows with a sufficiently large connection ID.  I'm already slightly worried about the overhead of TRAIN, but it is only periodic.  Adding N bytes to every packet is wasteful, especially when this is for high throughput flows.",
+          "createdAt": "2024-12-12T07:35:43Z",
+          "updatedAt": "2024-12-12T07:35:43Z"
         }
       ]
     }
