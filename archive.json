@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-12-22T01:15:09.192211+00:00",
+  "timestamp": "2024-12-24T01:09:51.736930+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -551,7 +551,7 @@
       "labels": [],
       "body": "Using the algorithm listed in 7.1, a network elements will alter bits 2 to 7 of a UDP datagram if:\r\n\r\n- Bit 0 is 1 (IIUC this eliminates all DTLS)\r\n- bytes 1 to 5 match the TRAIN version\r\n\r\nThis seems insufficient to guard against arbitrary UDP datagrams having their first byte sometimes mangled. If the packet is authenticated, it's \"just\" packet loss. If not, the protocol or application data can be corrupted. If the two conditions are consistently met for a UDP flow (e.g. bytes 1 to 5 are part of an identifier of some kind), SCONE will break the flow. \r\n\r\n(Presumably, network elements update the UDP checksum.)\r\n\r\nA purist might say this is always unacceptable, and there is not really a way to guarantee that a datagram is QUIC without decrypting the whole thing.\r\n\r\nNot being a purist, I think we should do everything we can to reduce this possibility.\r\n\r\nSome possible mitigations:\r\n- always require the QUIC bit to be set.\r\n- the element parses the full TRAIN long header format, verifying that both connection IDs fit in the datagram.\r\n- the element parses the invariants of the second coalesced packet, and verifies any CIDs there match. IMO this makes false positives extremely unlikely, though server packets may have a zero-length CID.\r\n- Make sure the TRAIN version number does not match any likely byte patterns (e.g. ASCII or Unicode, well-known formats for protocols over UDP, etc). It would also make sense for future TSVART reviews to explicitly check for collisions with TRAIN.\r\n\r\nA discussion of these concerns in the draft would also be appropriate.\r\n",
       "createdAt": "2024-12-12T01:16:55Z",
-      "updatedAt": "2024-12-12T07:35:44Z",
+      "updatedAt": "2024-12-23T21:37:32Z",
       "closedAt": null,
       "comments": [
         {
@@ -574,6 +574,13 @@
           "body": "That SHOULD would need to be a MUST so that intermediaries could ensure that they only alter flows with a sufficiently large connection ID.  I'm already slightly worried about the overhead of TRAIN, but it is only periodic.  Adding N bytes to every packet is wasteful, especially when this is for high throughput flows.",
           "createdAt": "2024-12-12T07:35:43Z",
           "updatedAt": "2024-12-12T07:35:43Z"
+        },
+        {
+          "author": "DavidSchinazi",
+          "authorAssociation": "NONE",
+          "body": "Another option would be to add a checksum to the TRAIN packet that covers the subsequent QUIC packet. That would avoid the case where the other UDP protocol picks a repeated identifier that collides with the TRAIN version. 2 bytes of checksum is probably enough",
+          "createdAt": "2024-12-23T21:37:31Z",
+          "updatedAt": "2024-12-23T21:37:31Z"
         }
       ]
     }
