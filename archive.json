@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-12-24T01:09:51.736930+00:00",
+  "timestamp": "2024-12-26T01:09:17.442574+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -551,7 +551,7 @@
       "labels": [],
       "body": "Using the algorithm listed in 7.1, a network elements will alter bits 2 to 7 of a UDP datagram if:\r\n\r\n- Bit 0 is 1 (IIUC this eliminates all DTLS)\r\n- bytes 1 to 5 match the TRAIN version\r\n\r\nThis seems insufficient to guard against arbitrary UDP datagrams having their first byte sometimes mangled. If the packet is authenticated, it's \"just\" packet loss. If not, the protocol or application data can be corrupted. If the two conditions are consistently met for a UDP flow (e.g. bytes 1 to 5 are part of an identifier of some kind), SCONE will break the flow. \r\n\r\n(Presumably, network elements update the UDP checksum.)\r\n\r\nA purist might say this is always unacceptable, and there is not really a way to guarantee that a datagram is QUIC without decrypting the whole thing.\r\n\r\nNot being a purist, I think we should do everything we can to reduce this possibility.\r\n\r\nSome possible mitigations:\r\n- always require the QUIC bit to be set.\r\n- the element parses the full TRAIN long header format, verifying that both connection IDs fit in the datagram.\r\n- the element parses the invariants of the second coalesced packet, and verifies any CIDs there match. IMO this makes false positives extremely unlikely, though server packets may have a zero-length CID.\r\n- Make sure the TRAIN version number does not match any likely byte patterns (e.g. ASCII or Unicode, well-known formats for protocols over UDP, etc). It would also make sense for future TSVART reviews to explicitly check for collisions with TRAIN.\r\n\r\nA discussion of these concerns in the draft would also be appropriate.\r\n",
       "createdAt": "2024-12-12T01:16:55Z",
-      "updatedAt": "2024-12-23T21:37:32Z",
+      "updatedAt": "2024-12-24T23:07:57Z",
       "closedAt": null,
       "comments": [
         {
@@ -581,6 +581,34 @@
           "body": "Another option would be to add a checksum to the TRAIN packet that covers the subsequent QUIC packet. That would avoid the case where the other UDP protocol picks a repeated identifier that collides with the TRAIN version. 2 bytes of checksum is probably enough",
           "createdAt": "2024-12-23T21:37:31Z",
           "updatedAt": "2024-12-23T21:37:31Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "OWNER",
+          "body": "Not a bad idea.  It wouldn't even need to be a checksum.  A checksum achieves the goal, which is to make the extra bytes a) change frequently, and b) be relatively easily verifiable.  The same might apply to a simple counter.",
+          "createdAt": "2024-12-24T07:21:35Z",
+          "updatedAt": "2024-12-24T07:21:35Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@martinthomson I am not sure I understand your comment about \"packets with a short header\". If I understand correctly, TRAIN packets are always sent with a long header. \r\n\r\nYes, just checking 4 bytes may not be enough to protect against collision with arbitrary protocols. Adding a long header check is better, because it adds a check of 2 more bytes. But it also forces the intermediaries to look at up to 263 bytes in the packet. If we accept the 20 bytes limit of V1, that still 27 bytes. Maybe OK, but we need to check with implementers of intermediaries.\r\n\r\n@martinduke the \"checksum\" idea enables the receiving endpoint to drop fake TRAINs, and that's great. But it only protect against collisions if the intermediaries look up the whole packet. Again, we should check with implementers whether intermediaries can do that.",
+          "createdAt": "2024-12-24T20:44:05Z",
+          "updatedAt": "2024-12-24T20:44:05Z"
+        },
+        {
+          "author": "martinduke",
+          "authorAssociation": "NONE",
+          "body": "@huitema He means that the \"real\" QUIC packet is a short header. So if the packet is server to client and the client has selected a zero-length CID, then there is no CID to match between the QUIC packet and the TRAIN packet.\r\n\r\nI don't see a need to checksum the whole packet: we just have to get past the connection ID to get entropy. We could just checksum the auth tag (last 16B of the datagram), although skipping to the end may be hard for a middlebox. The other appealing thing about taking it from the end is that it is very likely to be payload rather than a consistent application identifier of some sort.\r\n\r\nI'd therefore propose as a straw man:\r\n\r\nTRAIN Packet {\r\n  Header Form (1) = 1,\r\n  Reserved (1),\r\n  Rate Signal (6),\r\n  Version (32) = 0xTBD,\r\n  Destination Connection ID Length (8),\r\n  Destination Connection ID (0..2040),\r\n  Source Connection ID Length (8),\r\n  Source Connection ID (0..2040),\r\n  More Rate Signal (??),\r\n  UDP-style Checksum of last 16B of datagram (16).\r\n}\r\n\r\nI seem to recall some QUIC implementations meeting their INITIAL padding requirements by just adding 0x00 in the datagram after the QUIC packet. That would be ill-advised in this case, but I don't know if INITIALs are likely to be coupled with TRAIN.",
+          "createdAt": "2024-12-24T21:40:33Z",
+          "updatedAt": "2024-12-24T21:40:33Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "COLLABORATOR",
+          "body": "It depends what you are trying to protect against. There are two issues: middle boxes mistaking a DNS datagram (or some other app) for a TRAIN packet; and, MITM games of splicing a fake TRAIN and an old packet.\r\n\r\nFor the \"mistaking\" part, the simplest solution is to add a magic number of some kind. You want that magic number to be verifiable from the first few bytes in the packet. We do have one such number, the TRAIN version, and also 1 or 2 header bits depending of what we decide for the QUIC bit. We are concerned that this is not enough, and we are also concerned that only having a fixed value could result in systematic collisions\r\n\r\nFor the \"spoofing\" part, I am not sure. Copying bits from the appended packet will not help, because attackers can do that too. Adding a sequence number looks reasonable, but to be really sure I would want something tied to a value encrypted inside the payload of the attached packet. Maybe a frame in the encrypted payload that copy the TRAIN sequence number. That would allow end-to-end verification.\r\n\r\nSo my proposal would be:\r\n\r\n1) in the TRAIN payload, add a 32 bit TRAIN sequence number;\r\n2) after that, add an XOR or other combination of the sequence number with a 32 bit magic number specified in the spec.\r\n3) repeat that sequence number in a TRAIN frame carried encrypted by the attached packet.\r\n\r\nThe magic number provides for differentiation from other apps. The combination with the sequence number assures variability. The verification of the sequence number inside the encrypted payload of the attached packet provides some strong protection against spoofing.\r\n\r\nYes, on-path attackers could take a valid \"train + attached\" datagram and mess with the TRAIN signal. But that's about all they can do, and if we want to let the \"good middle boxes\" do that, we have to allow the bad ones to do it as well.\r\n\r\n",
+          "createdAt": "2024-12-24T23:06:29Z",
+          "updatedAt": "2024-12-24T23:07:57Z"
         }
       ]
     }
