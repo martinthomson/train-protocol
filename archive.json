@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-01-09T01:09:41.591483+00:00",
+  "timestamp": "2025-01-12T01:16:25.994243+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -551,7 +551,7 @@
       "labels": [],
       "body": "Using the algorithm listed in 7.1, a network elements will alter bits 2 to 7 of a UDP datagram if:\r\n\r\n- Bit 0 is 1 (IIUC this eliminates all DTLS)\r\n- bytes 1 to 5 match the TRAIN version\r\n\r\nThis seems insufficient to guard against arbitrary UDP datagrams having their first byte sometimes mangled. If the packet is authenticated, it's \"just\" packet loss. If not, the protocol or application data can be corrupted. If the two conditions are consistently met for a UDP flow (e.g. bytes 1 to 5 are part of an identifier of some kind), SCONE will break the flow. \r\n\r\n(Presumably, network elements update the UDP checksum.)\r\n\r\nA purist might say this is always unacceptable, and there is not really a way to guarantee that a datagram is QUIC without decrypting the whole thing.\r\n\r\nNot being a purist, I think we should do everything we can to reduce this possibility.\r\n\r\nSome possible mitigations:\r\n- always require the QUIC bit to be set.\r\n- the element parses the full TRAIN long header format, verifying that both connection IDs fit in the datagram.\r\n- the element parses the invariants of the second coalesced packet, and verifies any CIDs there match. IMO this makes false positives extremely unlikely, though server packets may have a zero-length CID.\r\n- Make sure the TRAIN version number does not match any likely byte patterns (e.g. ASCII or Unicode, well-known formats for protocols over UDP, etc). It would also make sense for future TSVART reviews to explicitly check for collisions with TRAIN.\r\n\r\nA discussion of these concerns in the draft would also be appropriate.\r\n",
       "createdAt": "2024-12-12T01:16:55Z",
-      "updatedAt": "2024-12-24T23:07:57Z",
+      "updatedAt": "2025-01-09T01:54:59Z",
       "closedAt": null,
       "comments": [
         {
@@ -609,6 +609,13 @@
           "body": "It depends what you are trying to protect against. There are two issues: middle boxes mistaking a DNS datagram (or some other app) for a TRAIN packet; and, MITM games of splicing a fake TRAIN and an old packet.\r\n\r\nFor the \"mistaking\" part, the simplest solution is to add a magic number of some kind. You want that magic number to be verifiable from the first few bytes in the packet. We do have one such number, the TRAIN version, and also 1 or 2 header bits depending of what we decide for the QUIC bit. We are concerned that this is not enough, and we are also concerned that only having a fixed value could result in systematic collisions\r\n\r\nFor the \"spoofing\" part, I am not sure. Copying bits from the appended packet will not help, because attackers can do that too. Adding a sequence number looks reasonable, but to be really sure I would want something tied to a value encrypted inside the payload of the attached packet. Maybe a frame in the encrypted payload that copy the TRAIN sequence number. That would allow end-to-end verification.\r\n\r\nSo my proposal would be:\r\n\r\n1) in the TRAIN payload, add a 32 bit TRAIN sequence number;\r\n2) after that, add an XOR or other combination of the sequence number with a 32 bit magic number specified in the spec.\r\n3) repeat that sequence number in a TRAIN frame carried encrypted by the attached packet.\r\n\r\nThe magic number provides for differentiation from other apps. The combination with the sequence number assures variability. The verification of the sequence number inside the encrypted payload of the attached packet provides some strong protection against spoofing.\r\n\r\nYes, on-path attackers could take a valid \"train + attached\" datagram and mess with the TRAIN signal. But that's about all they can do, and if we want to let the \"good middle boxes\" do that, we have to allow the bad ones to do it as well.\r\n\r\n",
           "createdAt": "2024-12-24T23:06:29Z",
           "updatedAt": "2024-12-24T23:07:57Z"
+        },
+        {
+          "author": "kazuho",
+          "authorAssociation": "COLLABORATOR",
+          "body": "+1 to what @huitema says about \"mistaking\" part. OTOH, I'm not sure if we need to care about spoofing, any more than we take care of spoofed ECN signals.\r\n\r\nTo paraphrase, I think point 1 and 2 of the proposal are reasonable, but 3 to be unnecessary.",
+          "createdAt": "2025-01-09T01:54:56Z",
+          "updatedAt": "2025-01-09T01:54:56Z"
         }
       ]
     }
