@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-01-30T01:06:50.644086+00:00",
+  "timestamp": "2025-02-02T01:11:34.934336+00:00",
   "repo": "martinthomson/train-protocol",
   "labels": [
     {
@@ -618,6 +618,22 @@
           "updatedAt": "2025-01-09T01:54:56Z"
         }
       ]
+    },
+    {
+      "number": 33,
+      "id": "I_kwDOMaSf_M6oQPBK",
+      "title": "Suggestions for when to probe",
+      "url": "https://github.com/martinthomson/train-protocol/issues/33",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "An endpoint that does TRAIN has to probe for changes.  It's hard to know what to recommend about when to send probes, but we might offer some guidance:\n\n1. If you want to be able to react to a change in state within $x$ seconds, then probe every $x-(\\text{sRTT}+\\text{RTTvar})$ seconds.  This is obvious, but we could state it.\n\n2. More interestingly: if the congestion controller advises that throughput ($\\text{CWND}/\\text{sRTT}$) has dipped below the advertised throughput, consider probing.\n\n3. Maybe something to do with interpreting ECN/L4S signals.\n\nThere might be other ideas.  We'd want to be sure about the guidance though, so that we can be sure that it is good advice.  \n\nWe should also include advice on not over-probing.  I'd say that all we need there is to suggest that endpoints avoid probing more than a small fixed number of times per round trip time.  Ideally this would be just one probe, but you might want some redundancy, so maybe a couple of probes is appropriate.  Note that at startup, you are unlikely to get to full network capacity quickly, so even then (where the signal is most useful) there should be multiple round trips in which you might probe.\n\nWe can also suggest that endpoints not probe anywhere near as much if probes get through the path without having a signal attached.  I's probably safe to assume that there is no signal forthcoming in that case.  Path changes aren't common enough to justify polling in that case.",
+      "createdAt": "2025-01-31T09:02:41Z",
+      "updatedAt": "2025-01-31T09:30:53Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
